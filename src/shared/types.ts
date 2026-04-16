@@ -12,10 +12,11 @@ export interface ZenSettings {
   footer: boolean;
   fixUblock: boolean;
   actionPanel: boolean;
+  activeSection: string;
 }
 
 export type SettingsKey = keyof ZenSettings;
-export type ToggleKey = Exclude<SettingsKey, 'enabled'>;
+export type ToggleKey = Exclude<SettingsKey, 'enabled' | 'activeSection'>;
 
 export interface HideRule {
   label: string;
