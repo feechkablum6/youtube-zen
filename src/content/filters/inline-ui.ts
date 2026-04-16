@@ -40,3 +40,20 @@ export function applyChipVisibility(
 ): void {
   chip.style.display = isPathVisible(pathname) ? '' : 'none';
 }
+
+export function mountChip(): HTMLButtonElement | null {
+  const existing = document.getElementById(CHIP_ID) as HTMLButtonElement | null;
+  if (existing) return existing;
+
+  const end = document.querySelector('ytd-masthead #end');
+  if (!end) return null;
+
+  const chip = createChip();
+  const buttons = end.querySelector('#buttons');
+  if (buttons) {
+    end.insertBefore(chip, buttons);
+  } else {
+    end.appendChild(chip);
+  }
+  return chip;
+}

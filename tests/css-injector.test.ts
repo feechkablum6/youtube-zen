@@ -132,3 +132,17 @@ describe('buildCss — watched filter', () => {
     expect(buildCss(settings)).toContain('prefers-reduced-motion');
   });
 });
+
+describe('buildCss — chip styles (bundled with watched filter)', () => {
+  it('includes chip styles when filter enabled', () => {
+    const settings: ZenSettings = { ...ALL_OFF, filterWatchedEnabled: true };
+    const css = buildCss(settings);
+    expect(css).toContain('#yz-chip-watched');
+    expect(css).toContain('[data-active="true"]');
+  });
+
+  it('excludes chip styles when filter disabled', () => {
+    const settings: ZenSettings = { ...ALL_OFF, filterWatchedEnabled: false };
+    expect(buildCss(settings)).not.toContain('#yz-chip-watched');
+  });
+});

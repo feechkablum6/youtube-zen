@@ -66,7 +66,38 @@ html.yz-initial ${cleanerSelectors.join(',\nhtml.yz-initial ')} {
   }
 
   if (hasWatched) {
-    parts.push(`html.yz-watched-filter-on .yz-watched {
+    parts.push(`#yz-chip-watched {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  padding: 0 12px;
+  margin-right: 8px;
+  border: 1px solid var(--yt-spec-10-percent-layer, rgba(255,255,255,.1));
+  border-radius: 16px;
+  background: transparent;
+  color: var(--yt-spec-text-primary, inherit);
+  font: inherit;
+  font-size: 13px;
+  opacity: .65;
+  cursor: pointer;
+  transition: opacity .15s, background .15s, border-color .15s;
+}
+#yz-chip-watched:hover { opacity: 1; }
+#yz-chip-watched:focus-visible {
+  outline: 2px solid var(--yt-spec-call-to-action, #3ea6ff);
+  outline-offset: 2px;
+}
+#yz-chip-watched[data-active="true"] {
+  opacity: 1;
+  background: var(--yt-spec-call-to-action, #3ea6ff);
+  color: #fff;
+  border-color: transparent;
+}
+.yz-chip__icon { font-size: 14px; line-height: 1; }
+.yz-chip__label { line-height: 1; }
+
+html.yz-watched-filter-on .yz-watched {
   animation: yz-vanish 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
   overflow: hidden !important;
 }

@@ -5,6 +5,7 @@ import {
   CHIP_ID,
   createChip,
   isPathVisible,
+  mountChip,
   syncChipState,
 } from '../../src/content/filters/inline-ui';
 
@@ -77,5 +78,62 @@ describe('applyChipVisibility', () => {
     applyChipVisibility(chip, '/shorts/x');
     applyChipVisibility(chip, '/results');
     expect(chip.style.display).toBe('');
+  });
+});
+
+describe('mountChip', () => {
+  it('returns null when masthead does not exist yet', () => {
+    expect(mountChip()).toBeNull();
+  });
+
+  it('inserts chip before #buttons inside ytd-masthead #end', () => {
+    const masthead = document.createElement('ytd-masthead');
+    const end = document.createElement('div');
+    end.id = 'end';
+    const skeleton = document.createElement('div');
+    skeleton.id = 'masthead-skeleton-icons';
+    const buttons = document.createElement('div');
+    buttons.id = 'buttons';
+    end.appendChild(skeleton);
+    end.appendChild(buttons);
+    masthead.appendChild(end);
+    document.body.appendChild(masthead);
+
+    const chip = mountChip();
+    expect(chip).not.toBeNull();
+    expect(chip!.id).toBe(CHIP_ID);
+    const children = Array.from(end.children);
+    const chipIdx = children.findIndex((c) => c.id === CHIP_ID);
+    const buttonsIdx = children.findIndex((c) => c.id === 'buttons');
+    expect(chipIdx).toBeGreaterThan(-1);
+    expect(chipIdx).toBeLessThan(buttonsIdx);
+  });
+
+  it('is idempotent (returns existing chip on second call)', () => {
+    const masthead = document.createElement('ytd-masthead');
+    const end = document.createElement('div');
+    end.id = 'end';
+    const buttons = document.createElement('div');
+    buttons.id = 'buttons';
+    end.appendChild(buttons);
+    masthead.appendChild(end);
+    document.body.appendChild(masthead);
+
+    const a = mountChip();
+    const b = mountChip();
+    expect(a).toBe(b);
+    expect(document.querySelectorAll(`#${CHIP_ID}`).length).toBe(1);
+  });
+
+  it('appends to #end when #buttons is absent', () => {
+    const masthead = document.createElement('ytd-masthead');
+    const end = document.createElement('div');
+    end.id = 'end';
+    masthead.appendChild(end);
+    document.body.appendChild(masthead);
+
+    const chip = mountChip();
+    expect(chip).not.toBeNull();
+    expect(end.lastElementChild).toBe(chip);
   });
 });

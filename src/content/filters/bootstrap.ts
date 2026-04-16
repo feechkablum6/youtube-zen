@@ -1,9 +1,19 @@
 import { DEFAULT_SETTINGS } from '../../shared/defaults';
 import type { ZenSettings } from '../../shared/types';
+import {
+  applyChipVisibility,
+  CHIP_ID,
+  mountChip,
+  syncChipState,
+} from './inline-ui';
 import { watchForCards } from './observer';
 import { applyWatchedClass, CARD_SELECTORS } from './watched';
 
 const FILTER_ON_CLASS = 'yz-watched-filter-on';
+
+function currentPath(): string {
+  return location.pathname || '/';
+}
 
 export function scanAll(root: ParentNode, threshold: number): void {
   const cards = root.querySelectorAll(CARD_SELECTORS.join(','));
@@ -43,7 +53,24 @@ function applySettings(settings: WatchedPatch): void {
   currentThreshold = settings.filterWatchedThreshold;
   syncHtmlClass(currentEnabled);
   scanAll(document, currentThreshold);
+  const chip = document.getElementById(CHIP_ID);
+  if (chip) syncChipState(chip, currentEnabled);
   for (const hook of enabledListeners) hook(currentEnabled);
+}
+
+function wireChip(chip: HTMLButtonElement): void {
+  applyChipVisibility(chip, currentPath());
+  syncChipState(chip, currentEnabled);
+  chip.addEventListener('click', () => {
+    chrome.storage.sync.set({ filterWatchedEnabled: !currentEnabled });
+  });
+}
+
+function tryMountChip(): boolean {
+  const chip = mountChip();
+  if (!chip) return false;
+  wireChip(chip);
+  return true;
 }
 
 export function initWatchedFilter(): void {
@@ -63,8 +90,21 @@ export function initWatchedFilter(): void {
     onCardAdded
   );
 
+  if (!tryMountChip()) {
+    // Masthead may render after the content script initialises.
+    const mountObserver = new MutationObserver(() => {
+      if (tryMountChip()) mountObserver.disconnect();
+    });
+    mountObserver.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+    });
+  }
+
   window.addEventListener('yt-navigate-finish', () => {
     scanAll(document, currentThreshold);
+    const chip = document.getElementById(CHIP_ID);
+    if (chip) applyChipVisibility(chip, currentPath());
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
