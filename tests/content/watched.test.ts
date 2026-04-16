@@ -56,6 +56,33 @@ describe('parseProgressPercent', () => {
     card.appendChild(overlay);
     expect(parseProgressPercent(card)).toBe(42.5);
   });
+
+  // 2026-04-17: YouTube migrated home/sidebar cards from
+  // `ytd-thumbnail-overlay-resume-playback-renderer #progress[style=width]`
+  // to the Material view model `yt-thumbnail-overlay-progress-bar-view-model`
+  // with a `.ytThumbnailOverlayProgressBarHostWatchedProgressBarSegment`
+  // carrying the width style.
+  describe('new Material overlay (2026-04)', () => {
+    it('parses percent from home card with material overlay', () => {
+      const card = homeCard(45, 'material');
+      expect(parseProgressPercent(card)).toBe(45);
+    });
+
+    it('parses percent from lockup card with material overlay', () => {
+      const card = lockupCard(80, 'material');
+      expect(parseProgressPercent(card)).toBe(80);
+    });
+
+    it('returns null when material segment has invalid width', () => {
+      const card = homeCard('invalid', 'material');
+      expect(parseProgressPercent(card)).toBeNull();
+    });
+
+    it('falls back to legacy overlay when only legacy is present', () => {
+      const card = searchCard(60, 'legacy');
+      expect(parseProgressPercent(card)).toBe(60);
+    });
+  });
 });
 
 describe('shouldHide', () => {
