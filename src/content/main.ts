@@ -4,6 +4,8 @@ import type { ZenSettings } from '../shared/types';
 import { buildCss } from './css-injector';
 
 const STYLE_ID = 'yt-zen-styles';
+const INITIAL_CLASS = 'yz-initial';
+const INITIAL_DURATION_MS = 800;
 
 function applyStyles(css: string): void {
   let styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
@@ -30,10 +32,31 @@ function getSettings(callback: (settings: ZenSettings) => void): void {
   });
 }
 
+let initialTimer: number | null = null;
+
+function pulseInitial(): void {
+  // Suppress the vanish animation for a short window so freshly-rendered
+  // elements hide instantly without a flash. Used on first paint and on
+  // every SPA navigation (YouTube replaces DOM without a full reload).
+  document.documentElement.classList.add(INITIAL_CLASS);
+  if (initialTimer !== null) window.clearTimeout(initialTimer);
+  initialTimer = window.setTimeout(() => {
+    document.documentElement.classList.remove(INITIAL_CLASS);
+    initialTimer = null;
+  }, INITIAL_DURATION_MS);
+}
+
 function init(): void {
+  pulseInitial();
+
   getSettings((settings) => {
     applyStyles(buildCss(settings));
   });
+
+  // YouTube SPA navigation events — DOM is rebuilt, matching elements
+  // reappear, re-pulse so they do not flash-and-fade on every page change.
+  window.addEventListener('yt-navigate-start', pulseInitial);
+  window.addEventListener('yt-navigate-finish', pulseInitial);
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'sync') return;

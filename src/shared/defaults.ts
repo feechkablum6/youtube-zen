@@ -14,4 +14,5 @@ export const DEFAULT_SETTINGS: ZenSettings = {
   footer: true,
   fixUblock: true,
   actionPanel: true,
+  activeSection: 'cleaner',
 };

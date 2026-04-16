@@ -3,28 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./src/popup/popup.css">
   <title>YouTube Zen</title>
+  <link rel="stylesheet" href="./src/popup/popup.css">
 </head>
 <body>
-  <div class="popup-container">
+  <div class="popup">
     <header class="popup-header">
-      <div class="popup-logo">🧘</div>
-      <div class="popup-title-group">
-        <h1 class="popup-title">YouTube Zen</h1>
-        <span class="popup-subtitle">focus mode</span>
-      </div>
-      <label class="toggle master-toggle" data-key="enabled">
-        <input type="checkbox">
-        <span class="toggle-slider"></span>
+      <div class="logo" aria-hidden="true">Z</div>
+      <div class="title">YouTube Zen</div>
+      <label class="master-switch">
+        <input type="checkbox" id="master">
+        <span class="master-slider"></span>
       </label>
     </header>
-    <main class="popup-content" id="toggles-container">
-      <!-- Generated dynamically by popup.ts -->
-    </main>
+    <div class="popup-body">
+      <nav class="rail" id="rail" aria-label="Разделы"></nav>
+      <main class="content" id="content"></main>
+    </div>
   </div>
   <script type="module" src="./src/popup/popup.ts"></script>
 </body>
