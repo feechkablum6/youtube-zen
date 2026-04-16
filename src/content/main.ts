@@ -3,6 +3,7 @@ import type { ZenSettings } from '../shared/types';
 
 import { buildCss } from './css-injector';
 import { initWatchedFilter } from './filters/bootstrap';
+import { startUblockCleaner, stopUblockCleaner } from './ublock-cleaner';
 
 const STYLE_ID = 'yt-zen-styles';
 const INITIAL_CLASS = 'yz-initial';
@@ -47,11 +48,20 @@ function pulseInitial(): void {
   }, INITIAL_DURATION_MS);
 }
 
+function applyUblockCleaner(settings: ZenSettings): void {
+  if (settings.enabled && settings.fixUblock) {
+    startUblockCleaner();
+  } else {
+    stopUblockCleaner();
+  }
+}
+
 function init(): void {
   pulseInitial();
 
   getSettings((settings) => {
     applyStyles(buildCss(settings));
+    applyUblockCleaner(settings);
   });
 
   initWatchedFilter();
@@ -66,6 +76,7 @@ function init(): void {
 
     getSettings((settings) => {
       applyStyles(buildCss(settings));
+      applyUblockCleaner(settings);
     });
   });
 

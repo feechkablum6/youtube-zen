@@ -146,19 +146,25 @@ describe('HIDE_RULES', () => {
       expect(HIDE_RULES.fixUblock.group).toBe('feed');
     });
 
-    it('таргетирует ytd-rich-item-renderer с ytd-ad-slot-renderer (пустые враппер после uBlock)', () => {
+    it('таргетирует прямые ad-врапперы (CSS-фолбэк до того как uBlock их удалит)', () => {
       const selectors = HIDE_RULES.fixUblock.selectors;
-      expect(selectors.some(s => s.includes('ytd-rich-item-renderer') && s.includes('ytd-ad-slot-renderer'))).toBe(true);
+      expect(selectors).toContain('ytd-ad-slot-renderer');
+      expect(selectors).toContain('ytd-in-feed-ad-layout-renderer');
+      expect(selectors).toContain('#masthead-ad');
+    });
+
+    it('не использует :has(ytd-ad-slot-renderer) — uBlock удаляет ad-slot из DOM, :has() ломается', () => {
+      // Anti-pattern: после удаления ad-slot через uBlock селектор
+      // `:has(ytd-ad-slot-renderer)` больше не матчит, и пустой
+      // ytd-rich-item-renderer снова становится видимым. Скрытие таких
+      // «трупов» делает JS-наблюдатель ublock-cleaner.ts.
+      const selectors = HIDE_RULES.fixUblock.selectors;
+      expect(selectors.some(s => s.includes(':has(ytd-ad-slot-renderer)'))).toBe(false);
     });
 
     it('таргетирует in-feed рекламу ytd-in-feed-ad-layout-renderer', () => {
       const selectors = HIDE_RULES.fixUblock.selectors;
       expect(selectors.some(s => s.includes('ytd-in-feed-ad-layout-renderer'))).toBe(true);
-    });
-
-    it('таргетирует ytd-rich-section-renderer с рекламой (Shorts-wrapper и ad-section)', () => {
-      const selectors = HIDE_RULES.fixUblock.selectors;
-      expect(selectors.some(s => s.includes('ytd-rich-section-renderer') && s.includes('ytd-ad-slot-renderer'))).toBe(true);
     });
   });
 
