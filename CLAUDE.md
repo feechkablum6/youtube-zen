@@ -37,3 +37,9 @@ Chrome Extension для очистки интерфейса YouTube через C
 - Do NOT use `document_idle` for content script — must be `document_start` for flash-free hiding.
 - Do NOT remove DOM elements — only hide via CSS `display: none !important`.
 - Do NOT hardcode toggle lists in popup HTML — generate from HIDE_RULES.
+- [2026-04-16] `ytd-guide-section-renderer` не имеет дочернего элемента `#header` — `has(> #header a[href="..."])` никогда не матчит. Правильно: `has(ytd-guide-entry-renderer a[href="..."])` (искать ссылку внутри записей секции).
+- [2026-04-16] `ytd-guide-section-renderer:first-child` скрывает главную навигацию (Home/Subscriptions), а не секцию «Навигатор». Навигатор идентифицируется по `a[href="/gaming"]` внутри записей.
+- [2026-04-16] «Плейлисты» — НЕ отдельная секция, а `ytd-guide-entry-renderer` внутри `ytd-guide-collapsible-section-entry-renderer` раздела «Вы». Таргетировать: `ytd-guide-entry-renderer:has(a[href="/feed/playlists"])`.
+- [2026-04-16] Секция «Подписки (список)» идентифицируется по `a[href="/feed/subscriptions"]` внутри `ytd-guide-entry-renderer` — ссылка `/feed/channels` не существует нигде в guide.
+- [2026-04-16] fixUblock таргетирует: ytd-rich-item-renderer/ytd-rich-section-renderer с ytd-ad-slot-renderer и ytd-in-feed-ad-layout-renderer — пустые контейнеры после uBlock + видимые in-feed рекламы.
+- [2026-04-16] Новые CSS-селекторы для YouTube верифицировать через Claude-in-Chrome MCP на залогиненном браузере пользователя, а не через отдельный DevTools (там нет сессии).

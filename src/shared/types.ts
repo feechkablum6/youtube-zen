@@ -10,6 +10,8 @@ export interface ZenSettings {
   explore: boolean;
   reportButton: boolean;
   footer: boolean;
+  fixUblock: boolean;
+  actionPanel: boolean;
 }
 
 export type SettingsKey = keyof ZenSettings;

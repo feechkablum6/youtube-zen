@@ -12,4 +12,6 @@ export const DEFAULT_SETTINGS: ZenSettings = {
   explore: true,
   reportButton: true,
   footer: true,
+  fixUblock: true,
+  actionPanel: true,
 };

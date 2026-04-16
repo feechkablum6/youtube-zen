@@ -17,6 +17,8 @@ describe('DEFAULT_SETTINGS', () => {
       'explore',
       'reportButton',
       'footer',
+      'fixUblock',
+      'actionPanel',
     ];
 
     for (const key of keys) {
@@ -43,6 +45,8 @@ describe('DEFAULT_SETTINGS', () => {
       'explore',
       'reportButton',
       'footer',
+      'fixUblock',
+      'actionPanel',
     ];
 
     expect(Object.keys(DEFAULT_SETTINGS).sort()).toEqual(expectedKeys.sort());
