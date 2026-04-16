@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Zen",
+  "description": "Clean up YouTube interface — hide Shorts, sidebar clutter, footer, and more.",
+  "version": "0.1.0",
+  "permissions": ["storage"],
+  "host_permissions": ["*://www.youtube.com/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_title": "YouTube Zen",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://www.youtube.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}
