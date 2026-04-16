@@ -2,6 +2,7 @@ import { DEFAULT_SETTINGS } from '../shared/defaults';
 import type { ZenSettings } from '../shared/types';
 
 import { buildCss } from './css-injector';
+import { initWatchedFilter } from './filters/bootstrap';
 
 const STYLE_ID = 'yt-zen-styles';
 const INITIAL_CLASS = 'yz-initial';
@@ -52,6 +53,8 @@ function init(): void {
   getSettings((settings) => {
     applyStyles(buildCss(settings));
   });
+
+  initWatchedFilter();
 
   // YouTube SPA navigation events — DOM is rebuilt, matching elements
   // reappear, re-pulse so they do not flash-and-fade on every page change.
