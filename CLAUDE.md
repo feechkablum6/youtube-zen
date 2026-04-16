@@ -44,7 +44,7 @@ Chrome Extension для очистки интерфейса YouTube через C
 ## Anti-Patterns
 
 - Do NOT use `document_idle` for content script — must be `document_start` for flash-free hiding.
-- Do NOT remove DOM elements — only hide via CSS `display: none !important`.
+- Do NOT remove DOM elements — hide via CSS. Hiding uses `animation: yz-vanish forwards` which collapses max-height to 0 at the end frame (equivalent to `display: none` for layout). First-load gets instant-hide via `html.yz-initial` override (dropped after 800ms) to prevent flash.
 - Do NOT hardcode toggle lists or section lists in popup HTML — popup.ts generates rail from `SECTIONS` and toggles from `HIDE_RULES`.
 - [2026-04-16] `ytd-guide-section-renderer` не имеет дочернего элемента `#header` — `has(> #header a[href="..."])` никогда не матчит. Правильно: `has(ytd-guide-entry-renderer a[href="..."])` (искать ссылку внутри записей секции).
 - [2026-04-16] `ytd-guide-section-renderer:first-child` скрывает главную навигацию (Home/Subscriptions), а не секцию «Навигатор». Навигатор идентифицируется по `a[href="/gaming"]` внутри записей.

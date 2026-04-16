@@ -4,6 +4,8 @@ import type { ZenSettings } from '../shared/types';
 import { buildCss } from './css-injector';
 
 const STYLE_ID = 'yt-zen-styles';
+const INITIAL_CLASS = 'yz-initial';
+const INITIAL_DURATION_MS = 800;
 
 function applyStyles(css: string): void {
   let styleEl = document.getElementById(STYLE_ID) as HTMLStyleElement | null;
@@ -31,6 +33,14 @@ function getSettings(callback: (settings: ZenSettings) => void): void {
 }
 
 function init(): void {
+  // Mark the first paint so css-injector's `.yz-initial` override fires
+  // instant-hide (no fade) while the page loads. We drop the class after
+  // a short delay so subsequent toggle flips animate normally.
+  document.documentElement.classList.add(INITIAL_CLASS);
+  window.setTimeout(() => {
+    document.documentElement.classList.remove(INITIAL_CLASS);
+  }, INITIAL_DURATION_MS);
+
   getSettings((settings) => {
     applyStyles(buildCss(settings));
   });
