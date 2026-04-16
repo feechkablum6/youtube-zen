@@ -24,7 +24,7 @@ export function makeStub(sectionLabel: string, icon = '✧'): PopupSection['rend
 
     const link = document.createElement('a');
     link.className = 'stub-link';
-    link.href = 'https://github.com';
+    link.href = 'https://github.com/feechkablum6/youtube-zen';
     link.target = '_blank';
     link.rel = 'noopener noreferrer';
     link.textContent = 'github →';
