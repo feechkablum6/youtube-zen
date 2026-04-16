@@ -22,9 +22,9 @@ Chrome Extension для очистки интерфейса YouTube через C
 - `src/content/` — content script (CSS injection, selectors mapping)
   - `filters/` — client-side feed filters (`watched.ts` chip + scan, `observer.ts` generic MutationObserver wrapper, `inline-ui.ts` chip rendered next to YouTube search bar, `bootstrap.ts` orchestrator)
 - `src/background/` — service worker (minimal, sets defaults on install)
-- `src/popup/` — popup UI (rail + content architecture, Paper light theme)
+- `src/popup/` — popup UI (rail + content architecture, dark theme with red accent `#FF2D2D`)
   - `popup.ts` — orchestrator (reads storage, mounts sections)
-  - `popup.css` — 320px Paper theme
+  - `popup.css` — 360px dark theme, CSS custom properties in `:root`
   - `sections.ts` — declarative `SECTIONS` registry
   - `sections/` — per-section render functions (`cleaner`, `filters`, `settings`, `stub`)
   - `storage.ts` — typed wrapper over `chrome.storage.sync`

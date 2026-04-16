@@ -1,18 +1,18 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --bg: #fafaf9;
-  --bg-rail: #f5f3f0;
-  --bg-hover: #f0ede9;
-  --bg-active: #eae7e3;
-  --border: #e7e5e4;
-  --border-soft: #f0eeec;
-  --text: #18181b;
-  --text-muted: #44403c;
-  --text-subtle: #a8a29e;
-  --accent: #18181b;
-  --accent-contrast: #fafaf9;
-  --accent-glow: rgba(24, 24, 27, 0.12);
+  --bg: #18181b;
+  --bg-rail: #0f0f11;
+  --bg-hover: #26262b;
+  --bg-active: #2e2e33;
+  --border: #2e2e33;
+  --border-soft: #232328;
+  --text: #f5f5f4;
+  --text-muted: #d4d4d8;
+  --text-subtle: #a1a1aa;
+  --accent: #FF2D2D;
+  --accent-contrast: #ffffff;
+  --accent-glow: rgba(255, 45, 45, 0.32);
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 10px;
@@ -28,6 +28,7 @@ body {
   background: var(--bg);
   color: var(--text);
   width: 360px;
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -47,15 +48,15 @@ body {
 }
 
 .logo {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--radius-sm);
   background: var(--accent);
   color: var(--accent-contrast);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   flex-shrink: 0;
   transition: transform var(--t-fast) var(--ease-spring);
@@ -64,7 +65,7 @@ body {
 .popup-header:hover .logo { transform: rotate(-6deg) scale(1.05); }
 
 .title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.2px;
   flex: 1;
@@ -183,7 +184,7 @@ body {
 
 /* Breadcrumb */
 .breadcrumb {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-subtle);
   display: flex;
   align-items: center;
@@ -211,13 +212,13 @@ body {
 }
 
 .section-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.2px;
 }
 
 .section-meta {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-subtle);
   font-variant-numeric: tabular-nums;
 }
@@ -250,7 +251,7 @@ body {
 .group-head:hover { background: var(--bg-hover); }
 
 .group-chevron {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-subtle);
   transition: transform var(--t-fast) var(--ease-out);
   display: inline-block;
@@ -260,7 +261,7 @@ body {
 .group.collapsed .group-chevron { transform: rotate(-90deg); }
 
 .group-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.2px;
@@ -269,10 +270,10 @@ body {
 }
 
 .group-count {
-  font-size: 10px;
+  font-size: 11px;
   color: var(--text-subtle);
   font-variant-numeric: tabular-nums;
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 .group-items {
@@ -317,7 +318,7 @@ body {
 .row:active { background: var(--bg-active); }
 
 .row-label {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--text-muted);
   user-select: none;
   transition: color var(--t-fast) var(--ease-out);
@@ -392,20 +393,20 @@ body {
 }
 
 .stub-title {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   margin-bottom: 6px;
 }
 
 .stub-body {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-subtle);
   margin-bottom: 14px;
   line-height: 1.5;
 }
 
 .stub-link {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-subtle);
   text-decoration: none;
   padding: 6px 12px;
@@ -423,11 +424,11 @@ body {
 /* Settings section */
 .btn {
   font-family: inherit;
-  font-size: 13px;
+  font-size: 14px;
   padding: 9px 12px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
-  background: #fff;
+  background: var(--bg-hover);
   color: var(--text);
   cursor: pointer;
   width: 100%;
@@ -436,7 +437,7 @@ body {
               border-color var(--t-fast) var(--ease-out),
               transform var(--t-fast) var(--ease-out);
 }
-.btn:hover { background: var(--bg-hover); border-color: var(--text-muted); }
+.btn:hover { background: var(--bg-active); border-color: var(--text-subtle); }
 .btn:active { transform: scale(0.98); }
 
 .about {
@@ -444,7 +445,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 6px 2px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-subtle);
 }
 
@@ -480,8 +481,8 @@ body {
   padding: 10px 12px;
 }
 .row--stack .row-label {
-  font-size: 12px;
-  opacity: 0.7;
+  font-size: 13px;
+  opacity: 0.75;
 }
 .row--stack input[type="range"] {
   width: 100%;
@@ -491,7 +492,7 @@ body {
 
 .yz-hint {
   margin: 0;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.4;
   color: var(--text-subtle);
 }
