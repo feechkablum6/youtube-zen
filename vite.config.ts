@@ -4,11 +4,13 @@ import { resolve } from 'node:path';
 import { build as esbuildBuild } from 'esbuild';
 import { defineConfig } from 'vite';
 
+const root = import.meta.dirname;
+
 function buildExtensionScriptsPlugin() {
   return {
     name: 'build-extension-scripts',
     async closeBundle() {
-      const distDir = resolve(__dirname, 'dist');
+      const distDir = resolve(root, 'dist');
       if (!existsSync(distDir)) {
         mkdirSync(distDir, { recursive: true });
       }
@@ -16,35 +18,35 @@ function buildExtensionScriptsPlugin() {
       await Promise.all([
         esbuildBuild({
           bundle: true,
-          entryPoints: [resolve(__dirname, 'src/background/main.ts')],
+          entryPoints: [resolve(root, 'src/background/main.ts')],
           format: 'esm',
           legalComments: 'none',
           outfile: resolve(distDir, 'background.js'),
           platform: 'browser',
           sourcemap: true,
           target: ['chrome120'],
-          tsconfig: resolve(__dirname, 'tsconfig.json'),
+          tsconfig: resolve(root, 'tsconfig.json'),
         }),
         esbuildBuild({
           bundle: true,
-          entryPoints: [resolve(__dirname, 'src/content/main.ts')],
+          entryPoints: [resolve(root, 'src/content/main.ts')],
           format: 'iife',
           legalComments: 'none',
           outfile: resolve(distDir, 'content.js'),
           platform: 'browser',
           sourcemap: true,
           target: ['chrome120'],
-          tsconfig: resolve(__dirname, 'tsconfig.json'),
+          tsconfig: resolve(root, 'tsconfig.json'),
         }),
       ]);
 
       copyFileSync(
-        resolve(__dirname, 'manifest.json'),
+        resolve(root, 'manifest.json'),
         resolve(distDir, 'manifest.json')
       );
 
       // Copy icons
-      const iconsDir = resolve(__dirname, 'icons');
+      const iconsDir = resolve(root, 'icons');
       const distIconsDir = resolve(distDir, 'icons');
       if (existsSync(iconsDir)) {
         if (!existsSync(distIconsDir)) {
@@ -59,12 +61,13 @@ function buildExtensionScriptsPlugin() {
 }
 
 export default defineConfig({
+  root,
   build: {
     emptyOutDir: true,
-    outDir: 'dist',
+    outDir: resolve(root, 'dist'),
     rollupOptions: {
       input: {
-        popup: resolve(__dirname, 'popup.html'),
+        popup: resolve(root, 'popup.html'),
       },
     },
     target: 'chrome120',
