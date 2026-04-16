@@ -18,7 +18,11 @@ const ALL_KEYS: (keyof ZenSettings)[] = [
   'fixUblock',
   'actionPanel',
   'activeSection',
+  'filterWatchedEnabled',
+  'filterWatchedThreshold',
 ];
+
+const OFF_BY_DEFAULT: (keyof ZenSettings)[] = ['filterWatchedEnabled'];
 
 describe('DEFAULT_SETTINGS', () => {
   it('has all ZenSettings keys', () => {
@@ -27,13 +31,22 @@ describe('DEFAULT_SETTINGS', () => {
     }
   });
 
-  it('all boolean toggle keys default to true', () => {
+  it('all boolean toggle keys default to true (except filter opt-ins)', () => {
     for (const key of ALL_KEYS) {
+      if (OFF_BY_DEFAULT.includes(key)) continue;
       const value = DEFAULT_SETTINGS[key];
       if (typeof value === 'boolean') {
         expect(value).toBe(true);
       }
     }
+  });
+
+  it('has watched filter disabled by default', () => {
+    expect(DEFAULT_SETTINGS.filterWatchedEnabled).toBe(false);
+  });
+
+  it('has watched threshold default of 20', () => {
+    expect(DEFAULT_SETTINGS.filterWatchedThreshold).toBe(20);
   });
 
   it('has no extra keys beyond ZenSettings', () => {
