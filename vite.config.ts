@@ -75,5 +75,6 @@ export default defineConfig({
   plugins: [buildExtensionScriptsPlugin()],
   test: {
     globals: true,
+    environment: 'jsdom',
   },
 });
