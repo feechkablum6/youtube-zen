@@ -2,6 +2,7 @@ import { DEFAULT_SETTINGS } from '../shared/defaults';
 import type { ZenSettings } from '../shared/types';
 
 import { buildCss } from './css-injector';
+import { initWatchedFilter } from './filters/bootstrap';
 import { startUblockCleaner, stopUblockCleaner } from './ublock-cleaner';
 
 const STYLE_ID = 'yt-zen-styles';
@@ -62,6 +63,8 @@ function init(): void {
     applyStyles(buildCss(settings));
     applyUblockCleaner(settings);
   });
+
+  initWatchedFilter();
 
   // YouTube SPA navigation events — DOM is rebuilt, matching elements
   // reappear, re-pulse so they do not flash-and-fade on every page change.

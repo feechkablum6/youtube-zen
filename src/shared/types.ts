@@ -13,10 +13,15 @@ export interface ZenSettings {
   fixUblock: boolean;
   actionPanel: boolean;
   activeSection: string;
+  filterWatchedEnabled: boolean;
+  filterWatchedThreshold: number;
 }
 
 export type SettingsKey = keyof ZenSettings;
-export type ToggleKey = Exclude<SettingsKey, 'enabled' | 'activeSection'>;
+export type ToggleKey = Exclude<
+  SettingsKey,
+  'enabled' | 'activeSection' | 'filterWatchedEnabled' | 'filterWatchedThreshold'
+>;
 
 export interface HideRule {
   label: string;

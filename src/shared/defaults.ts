@@ -15,4 +15,6 @@ export const DEFAULT_SETTINGS: ZenSettings = {
   fixUblock: true,
   actionPanel: true,
   activeSection: 'cleaner',
+  filterWatchedEnabled: false,
+  filterWatchedThreshold: 20,
 };

@@ -2,7 +2,7 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { build as esbuildBuild } from 'esbuild';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 const root = import.meta.dirname;
 
@@ -75,5 +75,6 @@ export default defineConfig({
   plugins: [buildExtensionScriptsPlugin()],
   test: {
     globals: true,
+    environment: 'jsdom',
   },
 });

@@ -108,3 +108,68 @@ describe('buildCss', () => {
     expect(css).toMatch(/min-width:\s*0/);
   });
 });
+
+describe('buildCss — watched filter', () => {
+  it('includes yz-watched rule when filterWatchedEnabled', () => {
+    const settings: ZenSettings = {
+      ...ALL_OFF,
+      filterWatchedEnabled: true,
+    };
+    const css = buildCss(settings);
+    expect(css).toContain('html.yz-watched-filter-on .yz-watched');
+    expect(css).toContain('animation: yz-vanish');
+  });
+
+  it('omits yz-watched rule when filter disabled', () => {
+    const settings: ZenSettings = {
+      ...ALL_OFF,
+      filterWatchedEnabled: false,
+    };
+    expect(buildCss(settings)).not.toContain('yz-watched-filter-on');
+  });
+
+  it('emits css even when all cleaner toggles are off but watched filter is on', () => {
+    const settings: ZenSettings = {
+      ...ALL_OFF,
+      filterWatchedEnabled: true,
+    };
+    expect(buildCss(settings)).not.toBe('');
+  });
+
+  it('includes prefers-reduced-motion variant', () => {
+    const settings: ZenSettings = {
+      ...ALL_OFF,
+      filterWatchedEnabled: true,
+    };
+    expect(buildCss(settings)).toContain('prefers-reduced-motion');
+  });
+
+  // Grid cells on YouTube use display: grid. Fading max-height to 0 is not
+  // enough — the grid-item still occupies its cell. We must collapse the
+  // element out of layout so neighbours re-flow. Chrome 120+ supports
+  // animating `display` through keyframes with `transition-behavior`
+  // defaults; we rely on that + `animation-fill-mode: forwards`.
+  it('collapses yz-watched out of grid layout at animation end', () => {
+    const settings: ZenSettings = {
+      ...ALL_OFF,
+      filterWatchedEnabled: true,
+    };
+    const css = buildCss(settings);
+    expect(css).toMatch(/@keyframes yz-vanish-collapse[\s\S]*display:\s*none/);
+    expect(css).toContain('animation: yz-vanish-collapse');
+  });
+});
+
+describe('buildCss — chip styles (bundled with watched filter)', () => {
+  it('includes chip styles when filter enabled', () => {
+    const settings: ZenSettings = { ...ALL_OFF, filterWatchedEnabled: true };
+    const css = buildCss(settings);
+    expect(css).toContain('#yz-chip-watched');
+    expect(css).toContain('[data-active="true"]');
+  });
+
+  it('excludes chip styles when filter disabled', () => {
+    const settings: ZenSettings = { ...ALL_OFF, filterWatchedEnabled: false };
+    expect(buildCss(settings)).not.toContain('#yz-chip-watched');
+  });
+});
