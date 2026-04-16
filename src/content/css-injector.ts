@@ -25,6 +25,11 @@ const KEYFRAMES = `@keyframes yz-vanish {
     -webkit-mask-image: linear-gradient(to top, transparent 100%, transparent 100%);
     mask-image: linear-gradient(to top, transparent 100%, transparent 100%);
     max-height: 0;
+    /* Zero width/flex-basis/min-width so flex-wrapped rows reflow and do
+       not leave an empty slot where the hidden shelf used to be. */
+    width: 0;
+    flex-basis: 0;
+    min-width: 0;
     margin: 0 !important;
     padding: 0 !important;
     border-width: 0 !important;

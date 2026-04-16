@@ -95,4 +95,16 @@ describe('buildCss', () => {
     expect(css).toContain('animation:');
     expect(css.length).toBeGreaterThan(100);
   });
+
+  it('fully collapses the hidden element width — not only height — so flex-wrap reflows neighbours', () => {
+    // Bug 2026-04-17: when a hidden ytd-rich-section-renderer (Shorts shelf)
+    // retains its full flex width in the final keyframe, flex-wrap pushes it
+    // onto a new row and leaves an empty slot in the previous row. Fix: the
+    // final keyframe must zero out width / flex-basis / min-width too.
+    const settings = { ...ALL_OFF, shorts: true };
+    const css = buildCss(settings);
+    expect(css).toMatch(/width:\s*0/);
+    expect(css).toMatch(/flex-basis:\s*0/);
+    expect(css).toMatch(/min-width:\s*0/);
+  });
 });
