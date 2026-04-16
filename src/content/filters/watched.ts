@@ -18,3 +18,13 @@ export function shouldHide(card: Element, threshold: number): boolean {
   if (percent === null) return false;
   return percent >= threshold;
 }
+
+export const CARD_SELECTORS: readonly string[] = [
+  'ytd-rich-item-renderer',
+  'ytd-video-renderer',
+  'yt-lockup-view-model',
+];
+
+export function applyWatchedClass(card: Element, threshold: number): void {
+  card.classList.toggle('yz-watched', shouldHide(card, threshold));
+}

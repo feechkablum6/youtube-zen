@@ -1,7 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { parseProgressPercent, shouldHide } from '../../src/content/filters/watched';
-import { searchCard } from './fixtures';
+import {
+  applyWatchedClass,
+  CARD_SELECTORS,
+  parseProgressPercent,
+  shouldHide,
+} from '../../src/content/filters/watched';
+import { homeCard, lockupCard, searchCard } from './fixtures';
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -77,5 +82,51 @@ describe('shouldHide', () => {
   it('threshold=100 hides only fully watched', () => {
     expect(shouldHide(searchCard(99), 100)).toBe(false);
     expect(shouldHide(searchCard(100), 100)).toBe(true);
+  });
+});
+
+describe('applyWatchedClass', () => {
+  it('adds yz-watched class when shouldHide is true', () => {
+    const card = searchCard(50);
+    applyWatchedClass(card, 20);
+    expect(card.classList.contains('yz-watched')).toBe(true);
+  });
+
+  it('removes yz-watched class when shouldHide is false', () => {
+    const card = searchCard(10);
+    card.classList.add('yz-watched');
+    applyWatchedClass(card, 20);
+    expect(card.classList.contains('yz-watched')).toBe(false);
+  });
+
+  it('is idempotent', () => {
+    const card = searchCard(50);
+    applyWatchedClass(card, 20);
+    applyWatchedClass(card, 20);
+    expect(card.classList.contains('yz-watched')).toBe(true);
+  });
+});
+
+describe('CARD_SELECTORS', () => {
+  it('includes all three card types', () => {
+    expect(CARD_SELECTORS).toEqual([
+      'ytd-rich-item-renderer',
+      'ytd-video-renderer',
+      'yt-lockup-view-model',
+    ]);
+  });
+
+  it('matches a home card', () => {
+    const card = homeCard();
+    document.body.appendChild(card);
+    const found = document.querySelector(CARD_SELECTORS.join(','));
+    expect(found).toBe(card);
+  });
+
+  it('matches a lockup card', () => {
+    const card = lockupCard();
+    document.body.appendChild(card);
+    const found = document.querySelector(CARD_SELECTORS.join(','));
+    expect(found).toBe(card);
   });
 });
