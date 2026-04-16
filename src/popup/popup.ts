@@ -82,20 +82,39 @@ async function init(): Promise<void> {
     void getSettings().then((latest) => {
       settings = latest;
 
-      if ('enabled' in changes) {
+      const hasEnabledChange = 'enabled' in changes;
+      const hasActiveSectionChange = 'activeSection' in changes;
+
+      if (hasEnabledChange) {
         masterInput.checked = settings.enabled;
         applyDisabledState(bodyEl, settings.enabled);
       }
 
-      if ('activeSection' in changes) {
+      if (hasActiveSectionChange) {
         const next = resolveActiveSection(settings.activeSection, knownIds);
         if (next !== activeId) {
           activeId = next;
           renderRail(railEl, activeId, handleSelect);
+          renderContent(contentEl, activeId, settings);
+          return;
         }
       }
 
-      renderContent(contentEl, activeId, settings);
+      // Structural change (enabled flipped, typically via master switch or reset)
+      // → full re-render so all inputs + disabled state update consistently.
+      if (hasEnabledChange) {
+        renderContent(contentEl, activeId, settings);
+        return;
+      }
+
+      // Only toggle keys changed → let the section patch itself in place,
+      // preserving scroll, focus, animations, and collapse state.
+      const section = findSection(activeId);
+      if (section.onStoragePatch) {
+        section.onStoragePatch(contentEl, settings, changes);
+      } else {
+        renderContent(contentEl, activeId, settings);
+      }
     });
   });
 

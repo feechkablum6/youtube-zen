@@ -6,7 +6,7 @@ import type { PopupSection } from '../sections';
 const ALL_KEYS = Object.keys(HIDE_RULES) as ToggleKey[];
 const GROUP_ORDER: HideRule['group'][] = ['feed', 'sidebar', 'video', 'footer'];
 
-// Preserved across re-renders (e.g. when storage changes) so user's
+// Preserved across re-renders (e.g. section switch) so user's
 // collapsed groups stay collapsed. Default: all expanded.
 const collapsedGroups = new Set<HideRule['group']>();
 
@@ -20,9 +20,46 @@ export const renderCleaner: PopupSection['render'] = function (container, settin
   for (const group of GROUP_ORDER) {
     const entries = grouped.get(group);
     if (!entries || entries.length === 0) continue;
-    container.appendChild(makeGroup(group, entries, settings));
+    container.appendChild(makeGroup(container, group, entries, settings));
   }
 };
+
+/**
+ * Called by popup orchestrator when only toggle keys changed (no enabled /
+ * activeSection flip). Updates input.checked for changed keys and recounts
+ * group / section meta. No DOM recreation → no flicker.
+ */
+export const onCleanerStoragePatch: NonNullable<PopupSection['onStoragePatch']> =
+  function (container, settings, changes) {
+    for (const key of Object.keys(changes)) {
+      if (!(key in HIDE_RULES)) continue;
+      const input = container.querySelector<HTMLInputElement>(
+        `input[data-key="${key}"]`
+      );
+      if (!input) continue;
+      const next = settings[key as ToggleKey];
+      if (input.checked !== next) input.checked = next;
+    }
+    recount(container, settings);
+  };
+
+function recount(root: HTMLElement, settings: ZenSettings): void {
+  // Section meta (X / Y across all rules)
+  const { active, total } = countActiveRules(settings, ALL_KEYS);
+  const meta = root.querySelector<HTMLElement>('.section-meta');
+  if (meta) meta.textContent = `${active} / ${total}`;
+
+  // Per-group counts
+  const grouped = groupRulesByGroup(HIDE_RULES);
+  root.querySelectorAll<HTMLElement>('.group').forEach((groupEl) => {
+    const name = groupEl.dataset.group as HideRule['group'] | undefined;
+    if (!name) return;
+    const entries = grouped.get(name) ?? [];
+    const activeInGroup = entries.filter((e) => settings[e.key]).length;
+    const count = groupEl.querySelector<HTMLElement>('.group-count');
+    if (count) count.textContent = `${activeInGroup}/${entries.length}`;
+  });
+}
 
 function makeBreadcrumb(current: string): HTMLElement {
   const bc = document.createElement('div');
@@ -65,12 +102,14 @@ function makeSectionHead(title: string, settings: ZenSettings): HTMLElement {
 }
 
 function makeGroup(
+  root: HTMLElement,
   group: HideRule['group'],
   entries: GroupedRule[],
   settings: ZenSettings
 ): HTMLElement {
   const groupEl = document.createElement('div');
   groupEl.className = 'group';
+  groupEl.dataset.group = group;
   if (collapsedGroups.has(group)) groupEl.classList.add('collapsed');
 
   const head = document.createElement('div');
@@ -102,7 +141,7 @@ function makeGroup(
   items.className = 'group-items';
 
   for (const entry of entries) {
-    items.appendChild(makeRow(entry, settings));
+    items.appendChild(makeRow(root, entry, settings));
   }
 
   groupEl.appendChild(head);
@@ -110,7 +149,11 @@ function makeGroup(
   return groupEl;
 }
 
-function makeRow(entry: GroupedRule, settings: ZenSettings): HTMLElement {
+function makeRow(
+  root: HTMLElement,
+  entry: GroupedRule,
+  settings: ZenSettings
+): HTMLElement {
   const row = document.createElement('label');
   row.className = 'row';
 
@@ -123,9 +166,15 @@ function makeRow(entry: GroupedRule, settings: ZenSettings): HTMLElement {
 
   const input = document.createElement('input');
   input.type = 'checkbox';
+  input.dataset.key = entry.key;
   input.checked = settings[entry.key];
   input.addEventListener('change', () => {
+    // Write to storage (content script will pick it up and update CSS).
     chrome.storage.sync.set({ [entry.key]: input.checked });
+    // Optimistic local recount — the storage event will arrive and call
+    // onCleanerStoragePatch, which is idempotent, so no harm.
+    const optimistic: ZenSettings = { ...settings, [entry.key]: input.checked };
+    recount(root, optimistic);
   });
 
   const slider = document.createElement('span');
