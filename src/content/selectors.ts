@@ -116,18 +116,18 @@ export const HIDE_RULES: Record<ToggleKey, HideRule> = {
     label: 'Фикс uBlock',
     group: 'feed',
     selectors: [
-      // In-feed реклама (видео с баджем «Есть реклама») — подтверждено DOM
-      'ytd-rich-item-renderer:has(ytd-in-feed-ad-layout-renderer)',
-      'ytd-rich-section-renderer:has(ytd-in-feed-ad-layout-renderer)',
-      // Пустые контейнеры после удаления рекламы uBlock (h=0 но занимают grid-ячейку)
-      'ytd-rich-item-renderer:has(ytd-ad-slot-renderer)',
-      'ytd-rich-section-renderer:has(ytd-ad-slot-renderer)',
-      // Прочие рекламные форматы
+      // CSS-фолбэк: прямое скрытие известных ad-врапперов до того, как uBlock
+      // успеет их удалить. Если uBlock вырезает их из DOM — пустой контейнер
+      // скрывает IntersectionObserver в ublock-cleaner.ts (JS).
       'ytd-ad-slot-renderer',
       'ytd-in-feed-ad-layout-renderer',
       '#masthead-ad',
       'ytd-display-ad-renderer',
       'ytd-banner-promo-renderer',
+      // In-feed реклама, ещё содержащая маркер :has() — на случай когда uBlock
+      // не отработал (например, отключён или медленно стартовал).
+      'ytd-rich-item-renderer:has(ytd-in-feed-ad-layout-renderer)',
+      'ytd-rich-section-renderer:has(ytd-in-feed-ad-layout-renderer)',
     ],
   },
 };
