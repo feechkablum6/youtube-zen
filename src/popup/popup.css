@@ -1,0 +1,218 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg-primary: #0f0f1a;
+  --bg-secondary: #1a1a2e;
+  --bg-tertiary: #16213e;
+  --bg-card: rgba(255, 255, 255, 0.04);
+  --accent: #6366f1;
+  --accent-glow: rgba(99, 102, 241, 0.08);
+  --text-primary: #e0e0e0;
+  --text-secondary: #9ca3af;
+  --text-label: #6366f1;
+  --toggle-off-bg: rgba(255, 255, 255, 0.12);
+  --toggle-off-knob: #9ca3af;
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --transition: 0.2s ease;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: linear-gradient(165deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-tertiary) 100%);
+  color: var(--text-primary);
+  width: 320px;
+  min-height: 100px;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 80% 20%, var(--accent-glow) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.popup-container {
+  position: relative;
+  padding: 20px;
+}
+
+/* Header */
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.popup-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--accent), #8b5cf6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.popup-title-group {
+  flex: 1;
+}
+
+.popup-title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: #fff;
+}
+
+.popup-subtitle {
+  font-size: 10px;
+  color: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Toggle groups */
+.toggle-group {
+  margin-bottom: 14px;
+}
+
+.toggle-group:last-child {
+  margin-bottom: 0;
+}
+
+.group-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-label);
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.group-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+/* Toggle row */
+.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  transition: background var(--transition);
+}
+
+.toggle-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.toggle-row-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+/* Toggle switch */
+.toggle {
+  position: relative;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.toggle-slider {
+  display: block;
+  width: 36px;
+  height: 20px;
+  background: var(--toggle-off-bg);
+  border-radius: var(--radius-md);
+  position: relative;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+.toggle-slider::after {
+  content: '';
+  width: 14px;
+  height: 14px;
+  background: var(--toggle-off-knob);
+  border-radius: 50%;
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  transition: transform var(--transition), background var(--transition);
+}
+
+.toggle input:checked + .toggle-slider {
+  background: var(--accent);
+}
+
+.toggle input:checked + .toggle-slider::after {
+  transform: translateX(16px);
+  background: #fff;
+}
+
+/* Master toggle */
+.master-toggle .toggle-slider {
+  width: 40px;
+  height: 22px;
+}
+
+.master-toggle .toggle-slider::after {
+  width: 16px;
+  height: 16px;
+}
+
+.master-toggle input:checked + .toggle-slider::after {
+  transform: translateX(18px);
+}
+
+/* Disabled state when master toggle is off */
+.popup-content.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+  transition: opacity var(--transition);
+}
+
+/* Staggered reveal animation */
+.toggle-group {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: fadeInUp 0.25s ease forwards;
+}
+
+.toggle-group:nth-child(1) { animation-delay: 0.05s; }
+.toggle-group:nth-child(2) { animation-delay: 0.1s; }
+.toggle-group:nth-child(3) { animation-delay: 0.15s; }
+.toggle-group:nth-child(4) { animation-delay: 0.2s; }
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
