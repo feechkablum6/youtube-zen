@@ -12,3 +12,9 @@ export function parseProgressPercent(card: Element): number | null {
   const parsed = parseFloat(match[1]!);
   return Number.isFinite(parsed) ? parsed : null;
 }
+
+export function shouldHide(card: Element, threshold: number): boolean {
+  const percent = parseProgressPercent(card);
+  if (percent === null) return false;
+  return percent >= threshold;
+}
