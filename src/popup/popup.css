@@ -471,3 +471,28 @@ body {
 .content::-webkit-scrollbar-track { background: transparent; }
 .content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 .content::-webkit-scrollbar-thumb:hover { background: var(--text-subtle); }
+
+/* Filters section: stacked row for slider-style controls */
+.row--stack {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 10px 12px;
+}
+.row--stack .row-label {
+  font-size: 12px;
+  opacity: 0.7;
+}
+.row--stack input[type="range"] {
+  width: 100%;
+  margin: 4px 0;
+  accent-color: var(--accent);
+}
+
+.yz-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-subtle);
+}
+.yz-hint--muted { opacity: 0.75; padding: 6px 12px 10px; }
