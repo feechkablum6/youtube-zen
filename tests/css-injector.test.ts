@@ -96,3 +96,39 @@ describe('buildCss', () => {
     expect(css.length).toBeGreaterThan(100);
   });
 });
+
+describe('buildCss — watched filter', () => {
+  it('includes yz-watched rule when filterWatchedEnabled', () => {
+    const settings: ZenSettings = {
+      ...ALL_OFF,
+      filterWatchedEnabled: true,
+    };
+    const css = buildCss(settings);
+    expect(css).toContain('html.yz-watched-filter-on .yz-watched');
+    expect(css).toContain('animation: yz-vanish');
+  });
+
+  it('omits yz-watched rule when filter disabled', () => {
+    const settings: ZenSettings = {
+      ...ALL_OFF,
+      filterWatchedEnabled: false,
+    };
+    expect(buildCss(settings)).not.toContain('yz-watched-filter-on');
+  });
+
+  it('emits css even when all cleaner toggles are off but watched filter is on', () => {
+    const settings: ZenSettings = {
+      ...ALL_OFF,
+      filterWatchedEnabled: true,
+    };
+    expect(buildCss(settings)).not.toBe('');
+  });
+
+  it('includes prefers-reduced-motion variant', () => {
+    const settings: ZenSettings = {
+      ...ALL_OFF,
+      filterWatchedEnabled: true,
+    };
+    expect(buildCss(settings)).toContain('prefers-reduced-motion');
+  });
+});

@@ -35,21 +35,24 @@ const KEYFRAMES = `@keyframes yz-vanish {
 export function buildCss(settings: ZenSettings): string {
   if (!settings.enabled) return '';
 
-  const selectors: string[] = [];
+  const cleanerSelectors: string[] = [];
 
   for (const [key, rule] of Object.entries(HIDE_RULES)) {
     if (settings[key as ToggleKey]) {
-      selectors.push(...rule.selectors);
+      cleanerSelectors.push(...rule.selectors);
     }
   }
 
-  if (selectors.length === 0) return '';
+  const hasCleaner = cleanerSelectors.length > 0;
+  const hasWatched = settings.filterWatchedEnabled === true;
 
-  const selectorList = selectors.join(',\n');
+  if (!hasCleaner && !hasWatched) return '';
 
-  return `${KEYFRAMES}
+  const parts: string[] = [KEYFRAMES];
 
-${selectorList} {
+  if (hasCleaner) {
+    const selectorList = cleanerSelectors.join(',\n');
+    parts.push(`${selectorList} {
   animation: yz-vanish 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
   overflow: hidden !important;
 }
@@ -57,7 +60,24 @@ ${selectorList} {
 /* First-load override: hide instantly without playing the fade, so the
    initial page paint does not flash the hidden elements. main.ts removes
    the yz-initial class after the page settles. */
-html.yz-initial ${selectors.join(',\nhtml.yz-initial ')} {
+html.yz-initial ${cleanerSelectors.join(',\nhtml.yz-initial ')} {
   animation-duration: 0s !important;
-}`;
+}`);
+  }
+
+  if (hasWatched) {
+    parts.push(`html.yz-watched-filter-on .yz-watched {
+  animation: yz-vanish 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
+  overflow: hidden !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.yz-watched-filter-on .yz-watched {
+    animation: none !important;
+    display: none !important;
+  }
+}`);
+  }
+
+  return parts.join('\n\n');
 }
