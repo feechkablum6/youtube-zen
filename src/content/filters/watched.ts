@@ -1,9 +1,14 @@
-const PROGRESS_SELECTOR =
-  'ytd-thumbnail-overlay-resume-playback-renderer #progress';
+const OVERLAY_SELECTOR = 'ytd-thumbnail-overlay-resume-playback-renderer';
 const PERCENT_RE = /([0-9]+(?:\.[0-9]+)?)\s*%/;
 
 export function parseProgressPercent(card: Element): number | null {
-  const progress = card.querySelector<HTMLElement>(PROGRESS_SELECTOR);
+  // Two-step lookup: id="progress" is duplicated across cards (YouTube
+  // reuses the id inside every resume-playback overlay). A compound
+  // descendant selector can leak across subtrees with duplicate ids;
+  // scope explicitly via the overlay element first.
+  const overlay = card.querySelector<HTMLElement>(OVERLAY_SELECTOR);
+  if (!overlay) return null;
+  const progress = overlay.querySelector<HTMLElement>('#progress');
   if (!progress) return null;
   const style = progress.getAttribute('style');
   if (!style) return null;

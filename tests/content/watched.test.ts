@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { scanAll } from '../../src/content/filters/bootstrap';
 import {
   applyWatchedClass,
   CARD_SELECTORS,
@@ -128,5 +129,42 @@ describe('CARD_SELECTORS', () => {
     document.body.appendChild(card);
     const found = document.querySelector(CARD_SELECTORS.join(','));
     expect(found).toBe(card);
+  });
+});
+
+describe('scanAll', () => {
+  it('applies yz-watched to cards that exceed threshold', () => {
+    const c1 = searchCard(50);
+    const c2 = searchCard(10);
+    const c3 = searchCard(null);
+    document.body.appendChild(c1);
+    document.body.appendChild(c2);
+    document.body.appendChild(c3);
+    scanAll(document.body, 20);
+    expect(c1.classList.contains('yz-watched')).toBe(true);
+    expect(c2.classList.contains('yz-watched')).toBe(false);
+    expect(c3.classList.contains('yz-watched')).toBe(false);
+  });
+
+  it('re-scan updates classes when threshold changes', () => {
+    const card = searchCard(15);
+    document.body.appendChild(card);
+    scanAll(document.body, 20);
+    expect(card.classList.contains('yz-watched')).toBe(false);
+    scanAll(document.body, 10);
+    expect(card.classList.contains('yz-watched')).toBe(true);
+  });
+
+  it('scopes id="progress" to its own card (two-step lookup)', () => {
+    // Regression: a compound descendant selector with duplicated ids can
+    // match the first #progress in the document, not the one inside the
+    // scoped card. Use cards with different widths to verify scoping.
+    const a = searchCard(80);
+    const b = searchCard(5);
+    document.body.appendChild(a);
+    document.body.appendChild(b);
+    scanAll(document.body, 20);
+    expect(a.classList.contains('yz-watched')).toBe(true);
+    expect(b.classList.contains('yz-watched')).toBe(false);
   });
 });
