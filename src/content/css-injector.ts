@@ -2,32 +2,32 @@ import type { ToggleKey, ZenSettings } from '../shared/types';
 
 import { HIDE_RULES } from './selectors';
 
-// "Disintegrate & fly out" animation. The final keyframe collapses
-// max-height / margin / padding to zero so the hidden element releases
-// its layout space once the animation ends. `pointer-events: none` on
-// the final frame prevents interaction during the fade.
+// "Disintegrate on the spot" animation. The element stays in place while
+// a mask gradient sweeps bottom-to-top (nether parts dissolve first,
+// "ash flies up"), blur grows to suggest particles, and max-height
+// collapses linearly across the whole duration so the container eases
+// into the new layout instead of snapping at the end.
+//
+// max-height starts at 500px (covers nearly every YouTube sidebar /
+// shelf / button-row we target). Elements larger than that will clip
+// during the fade but still collapse to zero at the end.
 const KEYFRAMES = `@keyframes yz-vanish {
   0% {
     opacity: 1;
-    transform: none;
     filter: blur(0);
-    max-height: 100vh;
-  }
-  45% {
-    opacity: 0;
-    transform: scale(0.88) translateY(-24px) rotate(1.5deg);
-    filter: blur(8px);
-    max-height: 100vh;
+    -webkit-mask-image: linear-gradient(to top, black 0%, black 100%);
+    mask-image: linear-gradient(to top, black 0%, black 100%);
+    max-height: 500px;
   }
   100% {
     opacity: 0;
-    transform: scale(0.88) translateY(-24px) rotate(1.5deg);
-    filter: blur(8px);
+    filter: blur(6px);
+    -webkit-mask-image: linear-gradient(to top, transparent 100%, transparent 100%);
+    mask-image: linear-gradient(to top, transparent 100%, transparent 100%);
     max-height: 0;
     margin: 0 !important;
     padding: 0 !important;
     border-width: 0 !important;
-    overflow: hidden;
     pointer-events: none;
   }
 }`;

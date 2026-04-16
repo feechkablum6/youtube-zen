@@ -73,6 +73,22 @@ describe('buildCss', () => {
     expect(css).toMatch(/max-height:\s*0/);
   });
 
+  it('uses a mask gradient so the element disintegrates on the spot', () => {
+    const settings = { ...ALL_OFF, shorts: true };
+    const css = buildCss(settings);
+    // Ash-particle illusion: a linear-gradient mask sweeping bottom-to-top
+    // dissolves the element while it stays in place.
+    expect(css).toContain('mask-image');
+    expect(css).toMatch(/linear-gradient/);
+  });
+
+  it('does not translate, scale, or rotate the element away', () => {
+    const settings = { ...ALL_OFF, shorts: true };
+    const css = buildCss(settings);
+    // Element must disintegrate where it stands — no fly-out.
+    expect(css).not.toMatch(/transform:\s*[^;]*(?:scale|translate|rotate)/);
+  });
+
   it('generates a non-empty ruleset with all toggles enabled', () => {
     const css = buildCss(DEFAULT_SETTINGS);
     expect(css).toContain('@keyframes yz-vanish');
