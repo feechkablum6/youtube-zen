@@ -64,6 +64,33 @@ describe('HIDE_RULES', () => {
       const selectors = HIDE_RULES.shorts.selectors;
       expect(selectors.some(s => s.includes('ytd-guide-entry-renderer') && s.includes('title="Shorts"'))).toBe(true);
     });
+
+    it('ловит новую раскладку Shorts (ytm-shorts-lockup-view-model-v2) — подтверждено Claude-in-Chrome', () => {
+      const selectors = HIDE_RULES.shorts.selectors;
+      // YouTube A/B: Shorts рендерятся как индивидуальные ytd-rich-item-renderer
+      // без атрибута [is-shorts], с ytm-shorts-lockup-view-model-v2 внутри.
+      expect(
+        selectors.some(
+          (s) => s.includes('ytd-rich-item-renderer') && s.includes('ytm-shorts-lockup-view-model-v2')
+        )
+      ).toBe(true);
+    });
+
+    it('ловит shelf новой раскладки (ytd-rich-shelf-renderer с ytm-shorts-lockup-view-model-v2)', () => {
+      const selectors = HIDE_RULES.shorts.selectors;
+      expect(
+        selectors.some(
+          (s) => s.includes('ytd-rich-shelf-renderer') && s.includes('ytm-shorts-lockup-view-model-v2')
+        )
+      ).toBe(true);
+    });
+
+    it('сохраняет старые селекторы для совместимости', () => {
+      const selectors = HIDE_RULES.shorts.selectors;
+      // Пользователи, попавшие в старую раскладку, должны продолжать получать скрытие.
+      expect(selectors).toContain('ytd-rich-shelf-renderer[is-shorts]');
+      expect(selectors).toContain('ytd-reel-shelf-renderer');
+    });
   });
 
   describe('playlists — запись в разделе «ВЫ»', () => {

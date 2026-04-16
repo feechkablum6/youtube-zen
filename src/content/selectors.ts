@@ -5,8 +5,14 @@ export const HIDE_RULES: Record<ToggleKey, HideRule> = {
     label: 'Shorts',
     group: 'feed',
     selectors: [
+      // Старая раскладка — dedicated shelf с атрибутом is-shorts
       'ytd-rich-shelf-renderer[is-shorts]',
       'ytd-reel-shelf-renderer',
+      // Новая раскладка (A/B, подтверждено Claude-in-Chrome 2026-04-17): Shorts
+      // едут как индивидуальные плитки в общей ленте с ytm-shorts-lockup-view-model-v2
+      // внутри, без атрибута is-shorts. Плюс новый shelf-вариант того же контейнера.
+      'ytd-rich-item-renderer:has(ytm-shorts-lockup-view-model-v2)',
+      'ytd-rich-shelf-renderer:has(ytm-shorts-lockup-view-model-v2)',
       // Запись «Shorts» в сайдбаре (href отсутствует, идентифицируется по title)
       'ytd-guide-entry-renderer:has(a[title="Shorts"])',
     ],
