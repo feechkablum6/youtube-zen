@@ -80,4 +80,27 @@ describe('watchForCards', () => {
     expect(cb).toHaveBeenCalledWith(b);
     dispose();
   });
+
+  it('re-scans an existing card when children are added to its subtree', async () => {
+    // Regression: YouTube renders a grid card first, then injects the
+    // thumbnail overlay inside it. The observer must notice the later
+    // overlay insertion so the card is re-evaluated.
+    const card = searchCard();
+    document.body.appendChild(card);
+    await tick();
+    const cb = vi.fn();
+    const dispose = watchForCards(
+      document.body,
+      ['ytd-video-renderer'],
+      cb
+    );
+    const thumb = card.querySelector('ytd-thumbnail')!;
+    const overlay = document.createElement(
+      'ytd-thumbnail-overlay-resume-playback-renderer'
+    );
+    thumb.appendChild(overlay);
+    await tick();
+    expect(cb).toHaveBeenCalledWith(card);
+    dispose();
+  });
 });
