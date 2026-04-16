@@ -40,4 +40,10 @@ describe('SECTIONS registry', () => {
     const ids = SECTIONS.map((s) => s.id);
     expect(new Set(ids).size).toBe(ids.length);
   });
+
+  it('filters section is no longer a stub', async () => {
+    const { renderFilters } = await import('../../src/popup/sections/filters');
+    const filters = SECTIONS.find((s) => s.id === 'filters');
+    expect(filters?.render).toBe(renderFilters);
+  });
 });
