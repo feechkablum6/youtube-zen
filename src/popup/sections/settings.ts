@@ -4,6 +4,24 @@ import type { PopupSection } from '../sections';
 export const renderSettings: PopupSection['render'] = function (container) {
   container.innerHTML = '';
 
+  // Breadcrumb
+  const bc = document.createElement('div');
+  bc.className = 'breadcrumb';
+  const root = document.createElement('span');
+  root.className = 'breadcrumb-link';
+  root.textContent = 'YouTube Zen';
+  bc.appendChild(root);
+  const sep = document.createElement('span');
+  sep.className = 'breadcrumb-sep';
+  sep.textContent = '›';
+  bc.appendChild(sep);
+  const curr = document.createElement('span');
+  curr.className = 'breadcrumb-current';
+  curr.textContent = 'Настройки';
+  bc.appendChild(curr);
+  container.appendChild(bc);
+
+  // Section head
   const head = document.createElement('div');
   head.className = 'section-head';
   const title = document.createElement('div');
@@ -14,7 +32,7 @@ export const renderSettings: PopupSection['render'] = function (container) {
 
   // Reset button
   const resetBtn = document.createElement('button');
-  resetBtn.className = 'btn btn-secondary';
+  resetBtn.className = 'btn';
   resetBtn.type = 'button';
   resetBtn.textContent = 'Сбросить к дефолтам';
   resetBtn.addEventListener('click', () => {
