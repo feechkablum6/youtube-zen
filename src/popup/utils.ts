@@ -1,4 +1,4 @@
-import type { ToggleKey, ZenSettings } from '../shared/types';
+import type { HideRule, ToggleKey, ZenSettings } from '../shared/types';
 
 export function resolveActiveSection(
   stored: string,
@@ -17,4 +17,21 @@ export function countActiveRules(
     if (settings[k]) active++;
   }
   return { active, total: keys.length };
+}
+
+export interface GroupedRule {
+  key: ToggleKey;
+  label: string;
+}
+
+export function groupRulesByGroup(
+  rules: Record<string, HideRule>
+): Map<HideRule['group'], GroupedRule[]> {
+  const result = new Map<HideRule['group'], GroupedRule[]>();
+  for (const [key, rule] of Object.entries(rules)) {
+    const bucket = result.get(rule.group) ?? [];
+    bucket.push({ key: key as ToggleKey, label: rule.label });
+    result.set(rule.group, bucket);
+  }
+  return result;
 }

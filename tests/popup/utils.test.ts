@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { countActiveRules, resolveActiveSection } from '../../src/popup/utils';
+import {
+  countActiveRules,
+  groupRulesByGroup,
+  resolveActiveSection,
+} from '../../src/popup/utils';
+import { HIDE_RULES } from '../../src/content/selectors';
 import { DEFAULT_SETTINGS } from '../../src/shared/defaults';
 import type { ToggleKey } from '../../src/shared/types';
 
@@ -52,5 +57,48 @@ describe('countActiveRules', () => {
 
   it('handles empty key list', () => {
     expect(countActiveRules(DEFAULT_SETTINGS, [])).toEqual({ active: 0, total: 0 });
+  });
+});
+
+describe('groupRulesByGroup', () => {
+  it('returns a Map keyed by group name', () => {
+    const result = groupRulesByGroup(HIDE_RULES);
+    expect(result).toBeInstanceOf(Map);
+    expect(result.has('feed')).toBe(true);
+    expect(result.has('sidebar')).toBe(true);
+    expect(result.has('video')).toBe(true);
+    expect(result.has('footer')).toBe(true);
+  });
+
+  it('places shorts and fixUblock into feed group', () => {
+    const result = groupRulesByGroup(HIDE_RULES);
+    const feed = result.get('feed')!;
+    const keys = feed.map((e) => e.key);
+    expect(keys).toContain('shorts');
+    expect(keys).toContain('fixUblock');
+  });
+
+  it('places actionPanel into video group', () => {
+    const result = groupRulesByGroup(HIDE_RULES);
+    const video = result.get('video')!;
+    expect(video.map((e) => e.key)).toEqual(['actionPanel']);
+  });
+
+  it('preserves insertion order of HIDE_RULES entries within each group', () => {
+    const result = groupRulesByGroup(HIDE_RULES);
+    const sidebar = result.get('sidebar')!;
+    const keys = sidebar.map((e) => e.key);
+    expect(keys).toEqual([
+      'playlists', 'liked', 'yourVideos', 'downloads',
+      'subscriptions', 'navigator', 'explore', 'reportButton',
+    ]);
+  });
+
+  it('each entry includes key and label', () => {
+    const result = groupRulesByGroup(HIDE_RULES);
+    const feed = result.get('feed')!;
+    const shorts = feed.find((e) => e.key === 'shorts');
+    expect(shorts).toBeDefined();
+    expect(shorts!.label).toBe('Shorts');
   });
 });
