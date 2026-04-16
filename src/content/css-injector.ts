@@ -102,54 +102,14 @@ html.yz-initial ${cleanerSelectors.join(',\nhtml.yz-initial ')} {
 .yz-chip__icon { font-size: 14px; line-height: 1; }
 .yz-chip__label { line-height: 1; }
 
-/* Watched cards live inside YouTube grid layouts (ytd-rich-grid-renderer,
-   search results, sidebar). Animating max-height to 0 keeps the grid cell
-   occupied, so neighbours do not reflow. This keyframe also flips display
-   to none at the final frame (Chrome 120+ animates discrete display
-   changes in keyframes), so the grid-item leaves layout and neighbouring
-   cards take its place. */
-@keyframes yz-vanish-collapse {
-  0% {
-    opacity: 1;
-    filter: blur(0);
-    -webkit-mask-image: linear-gradient(to top, black 0%, black 100%);
-    mask-image: linear-gradient(to top, black 0%, black 100%);
-    max-height: 500px;
-    display: block;
-  }
-  99% {
-    opacity: 0;
-    filter: blur(6px);
-    -webkit-mask-image: linear-gradient(to top, transparent 100%, transparent 100%);
-    mask-image: linear-gradient(to top, transparent 100%, transparent 100%);
-    max-height: 0;
-    margin: 0;
-    padding: 0;
-    border-width: 0;
-    pointer-events: none;
-    display: block;
-  }
-  100% {
-    opacity: 0;
-    max-height: 0;
-    margin: 0;
-    padding: 0;
-    border-width: 0;
-    pointer-events: none;
-    display: none;
-  }
-}
-
+/* Watched cards are hidden instantly (display: none) — no animation.
+   Reason: Cleaner shelves animate out with yz-vanish for 0.45s. If a
+   watched card next to such a shelf also animates for 0.45s on its own
+   timeline, YouTube grid spends that window with mismatched cell sizes
+   and leaves visual gaps. Instant collapse reflows the grid in a single
+   tick with no intermediate states. */
 html.yz-watched-filter-on .yz-watched {
-  animation: yz-vanish-collapse 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
-  overflow: hidden !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html.yz-watched-filter-on .yz-watched {
-    animation: none !important;
-    display: none !important;
-  }
+  display: none !important;
 }`);
   }
 

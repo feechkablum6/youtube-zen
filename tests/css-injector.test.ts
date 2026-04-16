@@ -117,7 +117,6 @@ describe('buildCss — watched filter', () => {
     };
     const css = buildCss(settings);
     expect(css).toContain('html.yz-watched-filter-on .yz-watched');
-    expect(css).toContain('animation: yz-vanish');
   });
 
   it('omits yz-watched rule when filter disabled', () => {
@@ -136,27 +135,28 @@ describe('buildCss — watched filter', () => {
     expect(buildCss(settings)).not.toBe('');
   });
 
-  it('includes prefers-reduced-motion variant', () => {
-    const settings: ZenSettings = {
-      ...ALL_OFF,
-      filterWatchedEnabled: true,
-    };
-    expect(buildCss(settings)).toContain('prefers-reduced-motion');
-  });
+  // prefers-reduced-motion variant removed together with the animation —
+  // instant display:none already respects every reduce-motion preference.
 
-  // Grid cells on YouTube use display: grid. Fading max-height to 0 is not
-  // enough — the grid-item still occupies its cell. We must collapse the
-  // element out of layout so neighbours re-flow. Chrome 120+ supports
-  // animating `display` through keyframes with `transition-behavior`
-  // defaults; we rely on that + `animation-fill-mode: forwards`.
-  it('collapses yz-watched out of grid layout at animation end', () => {
+  // YouTube grid + flex containers calculate layout per tick. If watched
+  // cards are animated out with a 450ms vanish while cleaner shelfs are
+  // independently animated with the same duration, the grid spends 0.45s
+  // in an inconsistent state and gaps appear around the still-animating
+  // neighbours. For watched we collapse instantly — one tick, no gaps,
+  // consistent with how Cleaner's instant `html.yz-initial` override
+  // behaves on first paint.
+  it('hides watched cards instantly via display:none — no animation', () => {
     const settings: ZenSettings = {
       ...ALL_OFF,
       filterWatchedEnabled: true,
     };
     const css = buildCss(settings);
-    expect(css).toMatch(/@keyframes yz-vanish-collapse[\s\S]*display:\s*none/);
-    expect(css).toContain('animation: yz-vanish-collapse');
+    expect(css).toMatch(
+      /html\.yz-watched-filter-on \.yz-watched\s*\{[^}]*display:\s*none/
+    );
+    // No animation on the watched rule — that was causing grid gaps.
+    expect(css).not.toContain('yz-vanish-collapse');
+    expect(css).not.toMatch(/\.yz-watched\s*\{[^}]*animation:/);
   });
 });
 
