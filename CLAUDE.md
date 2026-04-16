@@ -20,16 +20,18 @@ Chrome Extension для очистки интерфейса YouTube через C
 
 - `src/shared/` — types and defaults (shared between all components)
 - `src/content/` — content script (CSS injection, selectors mapping)
+  - `filters/` — client-side feed filters (`watched.ts` chip + scan, `observer.ts` generic MutationObserver wrapper, `inline-ui.ts` chip rendered next to YouTube search bar, `bootstrap.ts` orchestrator)
 - `src/background/` — service worker (minimal, sets defaults on install)
 - `src/popup/` — popup UI (rail + content architecture, Paper light theme)
   - `popup.ts` — orchestrator (reads storage, mounts sections)
   - `popup.css` — 320px Paper theme
   - `sections.ts` — declarative `SECTIONS` registry
-  - `sections/` — per-section render functions (`cleaner`, `settings`, `stub`)
+  - `sections/` — per-section render functions (`cleaner`, `filters`, `settings`, `stub`)
   - `storage.ts` — typed wrapper over `chrome.storage.sync`
   - `utils.ts` — pure helpers (`resolveActiveSection`, `countActiveRules`, `groupRulesByGroup`)
-- `tests/` — unit tests (pure functions only, no browser)
-  - `tests/popup/` — popup helpers and registry tests
+- `tests/` — unit tests (Vitest with jsdom)
+  - `tests/content/` — content-script filter tests (DOM-based)
+  - `tests/popup/` — popup helpers, registry, and section tests
 
 ## Conventions
 
@@ -37,6 +39,7 @@ Chrome Extension для очистки интерфейса YouTube через C
 - `popup.html` lives at project root (Vite HTML entry point), references `src/popup/` via imports.
 - Adding a new popup section: one entry in `SECTIONS` in `src/popup/sections.ts` + a `render(container, settings)` function in `src/popup/sections/`. No changes to `popup.ts` or `popup.html`.
 - Adding a new hideable element (Очистка UI): one entry in `HIDE_RULES` in `src/content/selectors.ts` — popup cleaner section and CSS injector derive from it automatically.
+- Adding a new feed filter (Фильтры ленты): new pure function + test under `src/content/filters/`, registered from `bootstrap.ts`. Use a marker class on the card (e.g. `yz-watched`) plus a CSS rule in `css-injector.ts` gated by a feature flag in `ZenSettings`.
 - CSS selectors target YouTube Web Components (`ytd-*` tags) which are stable across updates.
 - All settings stored in `chrome.storage.sync`. `activeSection` key persists the last opened rail section.
 - Popup font: system stack (`-apple-system, system-ui, …`) — no Google Fonts, works offline.
@@ -52,5 +55,7 @@ Chrome Extension для очистки интерфейса YouTube через C
 - [2026-04-16] Секция «Подписки (список)» идентифицируется по `a[href="/feed/subscriptions"]` внутри `ytd-guide-entry-renderer` — ссылка `/feed/channels` не существует нигде в guide.
 - [2026-04-16] fixUblock таргетирует: ytd-rich-item-renderer/ytd-rich-section-renderer с ytd-ad-slot-renderer и ytd-in-feed-ad-layout-renderer — пустые контейнеры после uBlock + видимые in-feed рекламы.
 - [2026-04-16] Новые CSS-селекторы для YouTube верифицировать через Claude-in-Chrome MCP на залогиненном браузере пользователя, а не через отдельный DevTools (там нет сессии).
+- [2026-04-17] `element.querySelector('descendant #progress')` в jsdom (и в некоторых случаях в живом DOM) может матчить элемент за пределами subtree, когда `id="progress"` дублируется в других карточках. Правильно: two-step lookup — сначала найти контейнер (`overlay = card.querySelector('ytd-thumbnail-overlay-resume-playback-renderer')`), потом `overlay.querySelector('#progress')`. Применено в `src/content/filters/watched.ts`.
+- [2026-04-17] На странице `/watch` sidebar YouTube использует новую разметку `yt-lockup-view-model`, а не `ytd-compact-video-renderer`. Обновлять `CARD_SELECTORS` при добавлении поддержки.
 - [2026-04-17] Shorts едут в двух раскладках одновременно (A/B): старая — `ytd-rich-shelf-renderer[is-shorts]` / `ytd-reel-shelf-renderer`; новая — индивидуальные `ytd-rich-item-renderer` в общей ленте с `ytm-shorts-lockup-view-model-v2` внутри и БЕЗ атрибута `is-shorts`. Правило `shorts` должно содержать оба варианта.
 - [2026-04-17] Эвристика «пустая ячейка = `ytd-rich-item-renderer` без `ytd-rich-grid-media`» даёт false positive — YouTube перевёл превью на `yt-lockup-view-model` / `ytm-shorts-lockup-view-model-v2`. Для диагностики пустоты проверять отсутствие всего набора: `yt-lockup-view-model, ytm-shorts-lockup-view-model-v2, ytd-rich-grid-media, ytd-video-renderer, ytd-compact-video-renderer`.
