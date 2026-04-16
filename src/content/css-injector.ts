@@ -40,37 +40,24 @@ const KEYFRAMES = `@keyframes yz-vanish {
 export function buildCss(settings: ZenSettings): string {
   if (!settings.enabled) return '';
 
-  // Feed-group elements (Shorts shelf, in-feed ad slots) live inside
-  // YouTube's flex-wrap grid. Animating them out with yz-vanish keeps the
-  // flex slot for 0.45s and produces visible gaps around neighbouring
-  // cards. Everything else (sidebar entries, footer, video-page chrome)
-  // is in a block context where yz-vanish collapses cleanly.
-  const instantSelectors: string[] = [];
-  const animatedSelectors: string[] = [];
+  const cleanerSelectors: string[] = [];
 
   for (const [key, rule] of Object.entries(HIDE_RULES)) {
-    if (!settings[key as ToggleKey]) continue;
-    const bucket = rule.group === 'feed' ? instantSelectors : animatedSelectors;
-    bucket.push(...rule.selectors);
+    if (settings[key as ToggleKey]) {
+      cleanerSelectors.push(...rule.selectors);
+    }
   }
 
-  const hasInstant = instantSelectors.length > 0;
-  const hasAnimated = animatedSelectors.length > 0;
-  const hasCleaner = hasInstant || hasAnimated;
+  const hasCleaner = cleanerSelectors.length > 0;
   const hasWatched = settings.filterWatchedEnabled === true;
 
   if (!hasCleaner && !hasWatched) return '';
 
   const parts: string[] = [KEYFRAMES];
 
-  if (hasInstant) {
-    parts.push(`${instantSelectors.join(',\n')} {
-  display: none !important;
-}`);
-  }
-
-  if (hasAnimated) {
-    parts.push(`${animatedSelectors.join(',\n')} {
+  if (hasCleaner) {
+    const selectorList = cleanerSelectors.join(',\n');
+    parts.push(`${selectorList} {
   animation: yz-vanish 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards !important;
   overflow: hidden !important;
 }
@@ -78,7 +65,7 @@ export function buildCss(settings: ZenSettings): string {
 /* First-load override: hide instantly without playing the fade, so the
    initial page paint does not flash the hidden elements. main.ts removes
    the yz-initial class after the page settles. */
-html.yz-initial ${animatedSelectors.join(',\nhtml.yz-initial ')} {
+html.yz-initial ${cleanerSelectors.join(',\nhtml.yz-initial ')} {
   animation-duration: 0s !important;
 }`);
   }

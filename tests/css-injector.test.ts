@@ -37,21 +37,18 @@ describe('buildCss', () => {
     expect(css).toContain('@keyframes yz-vanish');
   });
 
-  it('applies the yz-vanish animation to non-feed selectors', () => {
-    // Shorts/feed elements use instant display:none (see separate test).
-    // Sidebar/footer/video elements use the animated yz-vanish.
-    const settings = { ...ALL_OFF, playlists: true };
+  it('applies the yz-vanish animation to matching selectors', () => {
+    const settings = { ...ALL_OFF, shorts: true };
     const css = buildCss(settings);
-    expect(css).toContain('ytd-guide-entry-renderer');
+    expect(css).toContain('ytd-reel-shelf-renderer');
     expect(css).toMatch(/animation:\s*yz-vanish/);
   });
 
   it('provides an instant-hide override for .yz-initial first load', () => {
-    // .yz-initial override applies to the animated bucket (sidebar/footer/
-    // video). Feed-group rules are already instant, no override needed.
-    const settings = { ...ALL_OFF, playlists: true };
+    const settings = { ...ALL_OFF, shorts: true };
     const css = buildCss(settings);
     expect(css).toContain('html.yz-initial');
+    // Override should shorten the animation to effectively zero
     expect(css).toMatch(/animation-duration:\s*0s/);
   });
 
@@ -109,39 +106,6 @@ describe('buildCss', () => {
     expect(css).toMatch(/width:\s*0/);
     expect(css).toMatch(/flex-basis:\s*0/);
     expect(css).toMatch(/min-width:\s*0/);
-  });
-
-  // Animating a Shorts shelf inside the feed's flex-wrap grid keeps the
-  // slot occupied for 0.45s, so neighbouring rows don't reflow until the
-  // animation ends — visible gaps during the transition, and residual
-  // gaps because flex-wrap already placed adjacent cards around the
-  // still-sized item. Feed-group rules (shorts, fixUblock) must instead
-  // hide with instant `display: none`, which YouTube's grid reflows in
-  // a single tick. Sidebar / footer / video-page rules keep the animation
-  // (they live in block contexts where yz-vanish works cleanly).
-  it('hides feed-group elements (Shorts) instantly via display:none', () => {
-    const settings = { ...ALL_OFF, shorts: true };
-    const css = buildCss(settings);
-    // Shorts selector must appear in a rule with display:none, not only animation.
-    expect(css).toMatch(
-      /ytd-reel-shelf-renderer[^{]*\{[^}]*display:\s*none/s
-    );
-  });
-
-  it('does not animate feed-group elements (Shorts) with yz-vanish', () => {
-    const settings = { ...ALL_OFF, shorts: true };
-    const css = buildCss(settings);
-    // ytd-reel-shelf-renderer must not end up in a ruleset that uses yz-vanish.
-    expect(css).not.toMatch(
-      /ytd-reel-shelf-renderer[^{]*\{[^}]*animation:\s*yz-vanish/s
-    );
-  });
-
-  it('keeps yz-vanish animation for sidebar-group elements', () => {
-    const settings = { ...ALL_OFF, playlists: true };
-    const css = buildCss(settings);
-    expect(css).toContain('@keyframes yz-vanish');
-    expect(css).toMatch(/animation:\s*yz-vanish/);
   });
 });
 
