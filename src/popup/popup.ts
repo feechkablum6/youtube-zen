@@ -4,7 +4,13 @@ import { resolveActiveSection } from './utils';
 import type { ZenSettings } from '../shared/types';
 
 function findSection(id: string): PopupSection {
-  return SECTIONS.find((s) => s.id === id) ?? SECTIONS[0];
+  // SECTIONS is declared non-empty in sections.ts; the fallback only
+  // exists to narrow the type under noUncheckedIndexedAccess.
+  const match = SECTIONS.find((s) => s.id === id);
+  if (match) return match;
+  const first = SECTIONS[0];
+  if (!first) throw new Error('SECTIONS registry is empty');
+  return first;
 }
 
 function renderRail(

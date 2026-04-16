@@ -32,18 +32,31 @@ function getSettings(callback: (settings: ZenSettings) => void): void {
   });
 }
 
-function init(): void {
-  // Mark the first paint so css-injector's `.yz-initial` override fires
-  // instant-hide (no fade) while the page loads. We drop the class after
-  // a short delay so subsequent toggle flips animate normally.
+let initialTimer: number | null = null;
+
+function pulseInitial(): void {
+  // Suppress the vanish animation for a short window so freshly-rendered
+  // elements hide instantly without a flash. Used on first paint and on
+  // every SPA navigation (YouTube replaces DOM without a full reload).
   document.documentElement.classList.add(INITIAL_CLASS);
-  window.setTimeout(() => {
+  if (initialTimer !== null) window.clearTimeout(initialTimer);
+  initialTimer = window.setTimeout(() => {
     document.documentElement.classList.remove(INITIAL_CLASS);
+    initialTimer = null;
   }, INITIAL_DURATION_MS);
+}
+
+function init(): void {
+  pulseInitial();
 
   getSettings((settings) => {
     applyStyles(buildCss(settings));
   });
+
+  // YouTube SPA navigation events — DOM is rebuilt, matching elements
+  // reappear, re-pulse so they do not flash-and-fade on every page change.
+  window.addEventListener('yt-navigate-start', pulseInitial);
+  window.addEventListener('yt-navigate-finish', pulseInitial);
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'sync') return;

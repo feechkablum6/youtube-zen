@@ -1,25 +1,11 @@
 import { DEFAULT_SETTINGS } from '../../shared/defaults';
 import type { PopupSection } from '../sections';
+import { makeBreadcrumb } from './breadcrumb';
 
 export const renderSettings: PopupSection['render'] = function (container) {
   container.innerHTML = '';
 
-  // Breadcrumb
-  const bc = document.createElement('div');
-  bc.className = 'breadcrumb';
-  const root = document.createElement('span');
-  root.className = 'breadcrumb-link';
-  root.textContent = 'YouTube Zen';
-  bc.appendChild(root);
-  const sep = document.createElement('span');
-  sep.className = 'breadcrumb-sep';
-  sep.textContent = '›';
-  bc.appendChild(sep);
-  const curr = document.createElement('span');
-  curr.className = 'breadcrumb-current';
-  curr.textContent = 'Настройки';
-  bc.appendChild(curr);
-  container.appendChild(bc);
+  container.appendChild(makeBreadcrumb('Настройки'));
 
   // Section head
   const head = document.createElement('div');

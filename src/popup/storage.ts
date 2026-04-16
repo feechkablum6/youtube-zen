@@ -9,7 +9,7 @@ const DEFAULT_RECORD = DEFAULT_SETTINGS as unknown as Record<string, unknown>;
 export function getSettings(): Promise<ZenSettings> {
   return new Promise((resolve) => {
     chrome.storage.sync.get(DEFAULT_RECORD, (stored) => {
-      resolve(stored as ZenSettings);
+      resolve(stored as unknown as ZenSettings);
     });
   });
 }

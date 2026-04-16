@@ -2,6 +2,7 @@ import { HIDE_RULES } from '../../content/selectors';
 import { GROUP_LABELS, type HideRule, type ToggleKey, type ZenSettings } from '../../shared/types';
 import { countActiveRules, groupRulesByGroup, type GroupedRule } from '../utils';
 import type { PopupSection } from '../sections';
+import { makeBreadcrumb } from './breadcrumb';
 
 const ALL_KEYS = Object.keys(HIDE_RULES) as ToggleKey[];
 const GROUP_ORDER: HideRule['group'][] = ['feed', 'sidebar', 'video', 'footer'];
@@ -59,28 +60,6 @@ function recount(root: HTMLElement, settings: ZenSettings): void {
     const count = groupEl.querySelector<HTMLElement>('.group-count');
     if (count) count.textContent = `${activeInGroup}/${entries.length}`;
   });
-}
-
-function makeBreadcrumb(current: string): HTMLElement {
-  const bc = document.createElement('div');
-  bc.className = 'breadcrumb';
-
-  const root = document.createElement('span');
-  root.className = 'breadcrumb-link';
-  root.textContent = 'YouTube Zen';
-  bc.appendChild(root);
-
-  const sep = document.createElement('span');
-  sep.className = 'breadcrumb-sep';
-  sep.textContent = '›';
-  bc.appendChild(sep);
-
-  const curr = document.createElement('span');
-  curr.className = 'breadcrumb-current';
-  curr.textContent = current;
-  bc.appendChild(curr);
-
-  return bc;
 }
 
 function makeSectionHead(title: string, settings: ZenSettings): HTMLElement {

@@ -82,7 +82,9 @@ describe('storage.ts', () => {
       await setSetting('enabled', false);
 
       expect(listener).toHaveBeenCalledTimes(1);
-      const call = listener.mock.calls[0][0] as Record<string, unknown>;
+      const firstCall = listener.mock.calls[0];
+      expect(firstCall).toBeDefined();
+      const call = firstCall![0] as Record<string, unknown>;
       expect(call).toHaveProperty('enabled');
     });
 

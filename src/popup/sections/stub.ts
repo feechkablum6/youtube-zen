@@ -1,24 +1,11 @@
 import type { PopupSection } from '../sections';
+import { makeBreadcrumb } from './breadcrumb';
 
 export function makeStub(sectionLabel: string, icon = '✧'): PopupSection['render'] {
   return function renderStub(container: HTMLElement) {
     container.innerHTML = '';
 
-    const bc = document.createElement('div');
-    bc.className = 'breadcrumb';
-    const root = document.createElement('span');
-    root.className = 'breadcrumb-link';
-    root.textContent = 'YouTube Zen';
-    bc.appendChild(root);
-    const sep = document.createElement('span');
-    sep.className = 'breadcrumb-sep';
-    sep.textContent = '›';
-    bc.appendChild(sep);
-    const curr = document.createElement('span');
-    curr.className = 'breadcrumb-current';
-    curr.textContent = sectionLabel;
-    bc.appendChild(curr);
-    container.appendChild(bc);
+    container.appendChild(makeBreadcrumb(sectionLabel));
 
     const wrapper = document.createElement('div');
     wrapper.className = 'stub';
