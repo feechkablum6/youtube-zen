@@ -1,5 +1,6 @@
 import { DEFAULT_SETTINGS } from '../../shared/defaults';
 import type { ZenSettings } from '../../shared/types';
+import { compactAllGridRows } from './compact-grid';
 import {
   applyChipVisibility,
   CHIP_ID,
@@ -10,6 +11,7 @@ import { watchForCards } from './observer';
 import { applyWatchedClass, CARD_SELECTORS } from './watched';
 
 const FILTER_ON_CLASS = 'yz-watched-filter-on';
+const COMPACT_DEBOUNCE_MS = 80;
 
 function currentPath(): string {
   return location.pathname || '/';
@@ -18,6 +20,18 @@ function currentPath(): string {
 export function scanAll(root: ParentNode, threshold: number): void {
   const cards = root.querySelectorAll(CARD_SELECTORS.join(','));
   cards.forEach((card) => applyWatchedClass(card, threshold));
+}
+
+// Compacting touches many DOM nodes; debounce calls triggered from
+// observer mutations so rapid card-injection bursts collapse into a
+// single pass.
+let compactTimer: number | null = null;
+function requestCompact(): void {
+  if (compactTimer !== null) return;
+  compactTimer = window.setTimeout(() => {
+    compactTimer = null;
+    compactAllGridRows(document);
+  }, COMPACT_DEBOUNCE_MS);
 }
 
 let currentThreshold = DEFAULT_SETTINGS.filterWatchedThreshold;
@@ -30,6 +44,7 @@ function syncHtmlClass(enabled: boolean): void {
 
 function onCardAdded(card: Element): void {
   applyWatchedClass(card, currentThreshold);
+  requestCompact();
 }
 
 type WatchedPatch = Pick<
@@ -53,6 +68,7 @@ function applySettings(settings: WatchedPatch): void {
   currentThreshold = settings.filterWatchedThreshold;
   syncHtmlClass(currentEnabled);
   scanAll(document, currentThreshold);
+  compactAllGridRows(document);
   const chip = document.getElementById(CHIP_ID);
   if (chip) syncChipState(chip, currentEnabled);
   for (const hook of enabledListeners) hook(currentEnabled);
@@ -103,6 +119,7 @@ export function initWatchedFilter(): void {
 
   window.addEventListener('yt-navigate-finish', () => {
     scanAll(document, currentThreshold);
+    compactAllGridRows(document);
     const chip = document.getElementById(CHIP_ID);
     if (chip) applyChipVisibility(chip, currentPath());
   });
