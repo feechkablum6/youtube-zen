@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   BTN_ID,
   createFiltersButton,
+  mountFiltersButton,
   syncButtonBadge,
 } from '../../src/content/filters/inline-ui';
 
@@ -45,5 +46,56 @@ describe('syncButtonBadge', () => {
     const badge = btn.querySelector<HTMLElement>('.yz-btn__badge')!;
     expect(badge.hasAttribute('hidden')).toBe(true);
     expect(btn.dataset.hasActive).toBe('false');
+  });
+});
+
+describe('mountFiltersButton', () => {
+  it('returns null when masthead does not exist yet', () => {
+    expect(mountFiltersButton()).toBeNull();
+  });
+
+  it('inserts button before #buttons inside ytd-masthead #end', () => {
+    const masthead = document.createElement('ytd-masthead');
+    const end = document.createElement('div');
+    end.id = 'end';
+    const buttons = document.createElement('div');
+    buttons.id = 'buttons';
+    end.appendChild(buttons);
+    masthead.appendChild(end);
+    document.body.appendChild(masthead);
+
+    const btn = mountFiltersButton();
+    expect(btn).not.toBeNull();
+    expect(btn!.id).toBe(BTN_ID);
+    const children = Array.from(end.children);
+    const btnIdx = children.findIndex((c) => c.id === BTN_ID);
+    const buttonsIdx = children.findIndex((c) => c.id === 'buttons');
+    expect(btnIdx).toBeGreaterThan(-1);
+    expect(btnIdx).toBeLessThan(buttonsIdx);
+  });
+
+  it('is idempotent (returns existing button on second call)', () => {
+    const masthead = document.createElement('ytd-masthead');
+    const end = document.createElement('div');
+    end.id = 'end';
+    masthead.appendChild(end);
+    document.body.appendChild(masthead);
+
+    const a = mountFiltersButton();
+    const b = mountFiltersButton();
+    expect(a).toBe(b);
+    expect(document.querySelectorAll(`#${BTN_ID}`).length).toBe(1);
+  });
+
+  it('appends to #end when #buttons is absent', () => {
+    const masthead = document.createElement('ytd-masthead');
+    const end = document.createElement('div');
+    end.id = 'end';
+    masthead.appendChild(end);
+    document.body.appendChild(masthead);
+
+    const btn = mountFiltersButton();
+    expect(btn).not.toBeNull();
+    expect(end.lastElementChild).toBe(btn);
   });
 });

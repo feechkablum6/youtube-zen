@@ -37,3 +37,17 @@ export function syncButtonBadge(btn: HTMLElement, hasActive: boolean): void {
   if (hasActive) badge.removeAttribute('hidden');
   else badge.setAttribute('hidden', '');
 }
+
+export function mountFiltersButton(): HTMLButtonElement | null {
+  const existing = document.getElementById(BTN_ID) as HTMLButtonElement | null;
+  if (existing) return existing;
+
+  const end = document.querySelector('ytd-masthead #end');
+  if (!end) return null;
+
+  const btn = createFiltersButton();
+  const buttons = end.querySelector('#buttons');
+  if (buttons) end.insertBefore(btn, buttons);
+  else end.appendChild(btn);
+  return btn;
+}
