@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  applyOnLoad,
   installNavListener,
   rewriteIfNeeded,
 } from '../../src/content/filters/search-url-rewriter';
@@ -105,5 +106,53 @@ describe('installNavListener', () => {
     window.dispatchEvent(new Event('yt-navigate-start'));
     expect(replaceSpy).not.toHaveBeenCalled();
     dispose();
+  });
+});
+
+describe('applyOnLoad', () => {
+  beforeEach(() => {
+    window.sessionStorage.clear();
+    window.history.replaceState({}, '', '/');
+  });
+
+  it('rewrites /results URL when sp missing and filters non-default', () => {
+    const filters: SearchFilters = { ...DEFAULT_FILTERS, sort: 'date' };
+    window.history.replaceState({}, '', '/results?search_query=a');
+    const spy = vi.spyOn(window.history, 'replaceState');
+    applyOnLoad(() => filters);
+    expect(spy).toHaveBeenCalled();
+    const newUrl = String(spy.mock.calls.at(-1)![2]);
+    expect(newUrl).toContain('sp=');
+    spy.mockRestore();
+  });
+
+  it('does nothing when not on /results', () => {
+    window.history.replaceState({}, '', '/');
+    const spy = vi.spyOn(window.history, 'replaceState');
+    applyOnLoad(() => ({ ...DEFAULT_FILTERS, sort: 'date' }));
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it('does not run twice in the same session', () => {
+    const filters: SearchFilters = { ...DEFAULT_FILTERS, sort: 'date' };
+    window.history.replaceState({}, '', '/results?search_query=a');
+    applyOnLoad(() => filters);
+    const spy = vi.spyOn(window.history, 'replaceState');
+    applyOnLoad(() => filters);
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
+  });
+
+  it('does nothing if sp is already present', () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/results?search_query=a&sp=CAI%3D'
+    );
+    const spy = vi.spyOn(window.history, 'replaceState');
+    applyOnLoad(() => ({ ...DEFAULT_FILTERS, sort: 'views' }));
+    expect(spy).not.toHaveBeenCalled();
+    spy.mockRestore();
   });
 });

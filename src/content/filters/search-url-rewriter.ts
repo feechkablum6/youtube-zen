@@ -11,6 +11,22 @@ export function rewriteIfNeeded(url: URL, filters: SearchFilters): URL {
   return next;
 }
 
+const APPLIED_FLAG = 'yz-sp-applied';
+
+export function applyOnLoad(getFilters: () => SearchFilters): void {
+  if (window.sessionStorage.getItem(APPLIED_FLAG)) return;
+  const current = new URL(window.location.href);
+  if (current.pathname !== '/results') return;
+  const rewritten = rewriteIfNeeded(current, getFilters());
+  if (rewritten.toString() === current.toString()) return;
+  window.sessionStorage.setItem(APPLIED_FLAG, String(Date.now()));
+  window.history.replaceState(
+    window.history.state,
+    '',
+    rewritten.toString()
+  );
+}
+
 export function installNavListener(
   getFilters: () => SearchFilters
 ): () => void {
