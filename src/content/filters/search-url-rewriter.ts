@@ -10,3 +10,21 @@ export function rewriteIfNeeded(url: URL, filters: SearchFilters): URL {
   next.searchParams.set('sp', decodeURIComponent(sp));
   return next;
 }
+
+export function installNavListener(
+  getFilters: () => SearchFilters
+): () => void {
+  const onNav = (): void => {
+    const current = new URL(window.location.href);
+    const rewritten = rewriteIfNeeded(current, getFilters());
+    if (rewritten.toString() !== current.toString()) {
+      window.history.replaceState(
+        window.history.state,
+        '',
+        rewritten.toString()
+      );
+    }
+  };
+  window.addEventListener('yt-navigate-start', onNav);
+  return () => window.removeEventListener('yt-navigate-start', onNav);
+}

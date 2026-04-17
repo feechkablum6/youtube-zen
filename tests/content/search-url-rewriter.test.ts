@@ -1,6 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { rewriteIfNeeded } from '../../src/content/filters/search-url-rewriter';
+import {
+  installNavListener,
+  rewriteIfNeeded,
+} from '../../src/content/filters/search-url-rewriter';
 import type { SearchFilters } from '../../src/shared/types';
 
 const DEFAULT_FILTERS: SearchFilters = {
@@ -46,5 +49,61 @@ describe('rewriteIfNeeded', () => {
     const next = rewriteIfNeeded(url, filters);
     expect(next).not.toBe(url);
     expect(url.searchParams.has('sp')).toBe(false);
+  });
+});
+
+describe('installNavListener', () => {
+  let replaceSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    window.history.replaceState({}, '', '/');
+    replaceSpy = vi.spyOn(window.history, 'replaceState');
+  });
+
+  afterEach(() => {
+    replaceSpy.mockRestore();
+  });
+
+  it('does nothing on yt-navigate-start when filters are default', () => {
+    const dispose = installNavListener(() => DEFAULT_FILTERS);
+    window.history.replaceState({}, '', '/results?search_query=a');
+    replaceSpy.mockClear();
+    window.dispatchEvent(new Event('yt-navigate-start'));
+    expect(replaceSpy).not.toHaveBeenCalled();
+    dispose();
+  });
+
+  it('replaces URL with sp= when filters non-default on /results without sp', () => {
+    const filters: SearchFilters = { ...DEFAULT_FILTERS, sort: 'date' };
+    const dispose = installNavListener(() => filters);
+    window.history.replaceState({}, '', '/results?search_query=a');
+    replaceSpy.mockClear();
+    window.dispatchEvent(new Event('yt-navigate-start'));
+    expect(replaceSpy).toHaveBeenCalledTimes(1);
+    const args = replaceSpy.mock.calls[0]!;
+    const newUrl = String(args[2]);
+    expect(newUrl).toContain('sp=');
+    expect(newUrl).toContain('search_query=a');
+    dispose();
+  });
+
+  it('dispose removes listener', () => {
+    const filters: SearchFilters = { ...DEFAULT_FILTERS, sort: 'date' };
+    const dispose = installNavListener(() => filters);
+    dispose();
+    window.history.replaceState({}, '', '/results?search_query=a');
+    replaceSpy.mockClear();
+    window.dispatchEvent(new Event('yt-navigate-start'));
+    expect(replaceSpy).not.toHaveBeenCalled();
+  });
+
+  it('ignores non-results paths', () => {
+    const filters: SearchFilters = { ...DEFAULT_FILTERS, sort: 'date' };
+    const dispose = installNavListener(() => filters);
+    window.history.replaceState({}, '', '/feed/subscriptions');
+    replaceSpy.mockClear();
+    window.dispatchEvent(new Event('yt-navigate-start'));
+    expect(replaceSpy).not.toHaveBeenCalled();
+    dispose();
   });
 });
