@@ -1,3 +1,22 @@
+export type UploadDateOpt =
+  | 'any' | 'hour' | 'today' | 'week' | 'month' | 'year';
+
+export type DurationOpt =
+  | 'any' | 'short' | 'medium' | 'long';
+
+export type SortOpt =
+  | 'relevance' | 'date' | 'views' | 'rating';
+
+export type TypeOpt =
+  | 'any' | 'video' | 'channel' | 'playlist' | 'movie';
+
+export interface SearchFilters {
+  uploadDate: UploadDateOpt;
+  duration: DurationOpt;
+  sort: SortOpt;
+  type: TypeOpt;
+}
+
 export interface ZenSettings {
   enabled: boolean;
   shorts: boolean;
@@ -15,12 +34,23 @@ export interface ZenSettings {
   activeSection: string;
   filterWatchedEnabled: boolean;
   filterWatchedThreshold: number;
+  filterSearchUploadDate: UploadDateOpt;
+  filterSearchDuration: DurationOpt;
+  filterSearchSort: SortOpt;
+  filterSearchType: TypeOpt;
 }
 
 export type SettingsKey = keyof ZenSettings;
 export type ToggleKey = Exclude<
   SettingsKey,
-  'enabled' | 'activeSection' | 'filterWatchedEnabled' | 'filterWatchedThreshold'
+  | 'enabled'
+  | 'activeSection'
+  | 'filterWatchedEnabled'
+  | 'filterWatchedThreshold'
+  | 'filterSearchUploadDate'
+  | 'filterSearchDuration'
+  | 'filterSearchSort'
+  | 'filterSearchType'
 >;
 
 export interface HideRule {

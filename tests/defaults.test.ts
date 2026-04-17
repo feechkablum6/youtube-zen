@@ -20,6 +20,10 @@ const ALL_KEYS: (keyof ZenSettings)[] = [
   'activeSection',
   'filterWatchedEnabled',
   'filterWatchedThreshold',
+  'filterSearchUploadDate',
+  'filterSearchDuration',
+  'filterSearchSort',
+  'filterSearchType',
 ];
 
 const OFF_BY_DEFAULT: (keyof ZenSettings)[] = ['filterWatchedEnabled'];
@@ -61,5 +65,20 @@ describe('DEFAULT_SETTINGS.activeSection', () => {
 
   it('is a string', () => {
     expect(typeof DEFAULT_SETTINGS.activeSection).toBe('string');
+  });
+});
+
+describe('DEFAULT_SETTINGS.search filters', () => {
+  it('filterSearchUploadDate defaults to "any"', () => {
+    expect(DEFAULT_SETTINGS.filterSearchUploadDate).toBe('any');
+  });
+  it('filterSearchDuration defaults to "any"', () => {
+    expect(DEFAULT_SETTINGS.filterSearchDuration).toBe('any');
+  });
+  it('filterSearchSort defaults to "relevance"', () => {
+    expect(DEFAULT_SETTINGS.filterSearchSort).toBe('relevance');
+  });
+  it('filterSearchType defaults to "any"', () => {
+    expect(DEFAULT_SETTINGS.filterSearchType).toBe('any');
   });
 });

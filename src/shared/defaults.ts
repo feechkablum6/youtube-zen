@@ -17,4 +17,8 @@ export const DEFAULT_SETTINGS: ZenSettings = {
   activeSection: 'cleaner',
   filterWatchedEnabled: false,
   filterWatchedThreshold: 20,
+  filterSearchUploadDate: 'any',
+  filterSearchDuration: 'any',
+  filterSearchSort: 'relevance',
+  filterSearchType: 'any',
 };
