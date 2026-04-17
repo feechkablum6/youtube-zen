@@ -2,9 +2,18 @@ import { describe, expect, it } from 'vitest';
 
 import {
   encodeLengthDelimitedField,
+  encodeSp,
   encodeVarint,
   encodeVarintField,
 } from '../../src/content/filters/sp-encoder';
+import type { SearchFilters } from '../../src/shared/types';
+
+const ALL_DEFAULT: SearchFilters = {
+  uploadDate: 'any',
+  duration: 'any',
+  sort: 'relevance',
+  type: 'any',
+};
 
 describe('encodeVarint', () => {
   it.each([
@@ -43,5 +52,25 @@ describe('encodeLengthDelimitedField', () => {
     expect(Array.from(encodeLengthDelimitedField(2, payload))).toEqual([
       0x12, 0x02, 0x08, 0x01,
     ]);
+  });
+});
+
+describe('encodeSp — all default', () => {
+  it('returns null when every filter is default', () => {
+    expect(encodeSp(ALL_DEFAULT)).toBeNull();
+  });
+});
+
+describe('encodeSp — single-value reference strings', () => {
+  it.each<[Partial<SearchFilters>, string]>([
+    [{ sort: 'date' }, 'CAI%3D'],
+    [{ uploadDate: 'hour' }, 'EgIIAQ%3D%3D'],
+    [{ uploadDate: 'today' }, 'EgIIAg%3D%3D'],
+    [{ uploadDate: 'week' }, 'EgIIAw%3D%3D'],
+    [{ duration: 'short' }, 'EgIYAQ%3D%3D'],
+    [{ type: 'video' }, 'EgIQAQ%3D%3D'],
+  ])('%j → %s', (partial, expected) => {
+    const filters: SearchFilters = { ...ALL_DEFAULT, ...partial };
+    expect(encodeSp(filters)).toBe(expected);
   });
 });
