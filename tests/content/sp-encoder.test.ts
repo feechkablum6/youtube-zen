@@ -6,7 +6,13 @@ import {
   encodeVarint,
   encodeVarintField,
 } from '../../src/content/filters/sp-encoder';
-import type { SearchFilters } from '../../src/shared/types';
+import type {
+  DurationOpt,
+  SearchFilters,
+  SortOpt,
+  TypeOpt,
+  UploadDateOpt,
+} from '../../src/shared/types';
 
 const ALL_DEFAULT: SearchFilters = {
   uploadDate: 'any',
@@ -73,4 +79,80 @@ describe('encodeSp — single-value reference strings', () => {
     const filters: SearchFilters = { ...ALL_DEFAULT, ...partial };
     expect(encodeSp(filters)).toBe(expected);
   });
+});
+
+describe('encodeSp — combinations', () => {
+  it('sort=date + upload=week → CAISAggD', () => {
+    const filters: SearchFilters = {
+      ...ALL_DEFAULT,
+      sort: 'date',
+      uploadDate: 'week',
+    };
+    expect(encodeSp(filters)).toBe(encodeURIComponent('CAISAggD'));
+  });
+
+  it('upload=today + duration=short → EgQIAhgB', () => {
+    const filters: SearchFilters = {
+      ...ALL_DEFAULT,
+      uploadDate: 'today',
+      duration: 'short',
+    };
+    expect(encodeSp(filters)).toBe(encodeURIComponent('EgQIAhgB'));
+  });
+
+  it('sort=views + duration=long + type=video → CAMSBBABGAI=', () => {
+    const filters: SearchFilters = {
+      ...ALL_DEFAULT,
+      sort: 'views',
+      duration: 'long',
+      type: 'video',
+    };
+    expect(encodeSp(filters)).toBe(encodeURIComponent('CAMSBBABGAI='));
+  });
+
+  it('upload=year + type=channel + sort=rating → CAESBAgFEAI=', () => {
+    const filters: SearchFilters = {
+      ...ALL_DEFAULT,
+      sort: 'rating',
+      uploadDate: 'year',
+      type: 'channel',
+    };
+    expect(encodeSp(filters)).toBe(encodeURIComponent('CAESBAgFEAI='));
+  });
+});
+
+describe('encodeSp — boundary enums', () => {
+  it.each<UploadDateOpt>(['hour', 'today', 'week', 'month', 'year'])(
+    'uploadDate=%s produces a non-null sp string',
+    (value) => {
+      const filters: SearchFilters = { ...ALL_DEFAULT, uploadDate: value };
+      const sp = encodeSp(filters);
+      expect(sp).not.toBeNull();
+      expect(sp!).toMatch(/^[A-Za-z0-9%]+$/);
+    }
+  );
+
+  it.each<DurationOpt>(['short', 'medium', 'long'])(
+    'duration=%s produces a non-null sp string',
+    (value) => {
+      const filters: SearchFilters = { ...ALL_DEFAULT, duration: value };
+      expect(encodeSp(filters)).not.toBeNull();
+    }
+  );
+
+  it.each<TypeOpt>(['video', 'channel', 'playlist', 'movie'])(
+    'type=%s produces a non-null sp string',
+    (value) => {
+      const filters: SearchFilters = { ...ALL_DEFAULT, type: value };
+      expect(encodeSp(filters)).not.toBeNull();
+    }
+  );
+
+  it.each<SortOpt>(['date', 'views', 'rating'])(
+    'sort=%s produces a non-null sp string',
+    (value) => {
+      const filters: SearchFilters = { ...ALL_DEFAULT, sort: value };
+      expect(encodeSp(filters)).not.toBeNull();
+    }
+  );
 });
