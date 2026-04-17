@@ -202,3 +202,22 @@ export function closePanel(btn: HTMLElement): void {
   if (panel) panel.remove();
   btn.setAttribute('aria-expanded', 'false');
 }
+
+export function syncPanelInputs(
+  panel: HTMLElement,
+  settings: ZenSettings
+): void {
+  const toggle = panel.querySelector<HTMLInputElement>(
+    'input[data-key="filterWatchedEnabled"]'
+  );
+  if (toggle) toggle.checked = settings.filterWatchedEnabled;
+
+  for (const spec of SELECT_SPECS) {
+    const select = panel.querySelector<HTMLSelectElement>(
+      `select[data-key="${spec.key}"]`
+    );
+    if (!select) continue;
+    const value = settings[spec.key] as string;
+    if (select.value !== value) select.value = value;
+  }
+}

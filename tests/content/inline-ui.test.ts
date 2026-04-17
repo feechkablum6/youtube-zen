@@ -9,6 +9,7 @@ import {
   mountFiltersButton,
   openPanel,
   syncButtonBadge,
+  syncPanelInputs,
 } from '../../src/content/filters/inline-ui';
 import { DEFAULT_SETTINGS } from '../../src/shared/defaults';
 
@@ -181,5 +182,37 @@ describe('openPanel / closePanel', () => {
     const b = openPanel(btn, DEFAULT_SETTINGS);
     expect(a).toBe(b);
     expect(document.querySelectorAll(`#${PANEL_ID}`).length).toBe(1);
+  });
+});
+
+describe('syncPanelInputs', () => {
+  it('updates select values from settings', () => {
+    const btn = createFiltersButton();
+    document.body.appendChild(btn);
+    const panel = openPanel(btn, DEFAULT_SETTINGS);
+    syncPanelInputs(panel, {
+      ...DEFAULT_SETTINGS,
+      filterSearchSort: 'views',
+      filterSearchDuration: 'long',
+    });
+    const sort = panel.querySelector<HTMLSelectElement>(
+      'select[data-key="filterSearchSort"]'
+    )!;
+    const duration = panel.querySelector<HTMLSelectElement>(
+      'select[data-key="filterSearchDuration"]'
+    )!;
+    expect(sort.value).toBe('views');
+    expect(duration.value).toBe('long');
+  });
+
+  it('updates checkbox state', () => {
+    const btn = createFiltersButton();
+    document.body.appendChild(btn);
+    const panel = openPanel(btn, DEFAULT_SETTINGS);
+    syncPanelInputs(panel, { ...DEFAULT_SETTINGS, filterWatchedEnabled: true });
+    const toggle = panel.querySelector<HTMLInputElement>(
+      'input[data-key="filterWatchedEnabled"]'
+    )!;
+    expect(toggle.checked).toBe(true);
   });
 });
