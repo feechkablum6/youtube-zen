@@ -54,10 +54,12 @@ describe('renderFilters', () => {
     expect(container.textContent).toContain('≥ 42%');
   });
 
-  it('mentions chip for on/off control', () => {
+  it('mentions the Filters button as the on/off control', () => {
     const container = makeContainer();
     renderFilters(container, DEFAULT_SETTINGS);
-    expect((container.textContent ?? '').toLowerCase()).toMatch(/чип|поле поиска/);
+    const text = (container.textContent ?? '').toLowerCase();
+    expect(text).toMatch(/фильтры/);
+    expect(text).not.toMatch(/чип/);
   });
 
   it('writes new threshold to storage on input event (debounced)', async () => {

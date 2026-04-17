@@ -69,7 +69,7 @@ export const renderFilters: PopupSection['render'] = function (
   const footnote = document.createElement('p');
   footnote.className = 'yz-hint yz-hint--muted';
   footnote.textContent =
-    'Включение и выключение — через чип рядом с полем поиска YouTube.';
+    'Включение, выключение и фильтры поиска — через кнопку «Фильтры» рядом с поиском YouTube.';
   items.appendChild(footnote);
 
   group.appendChild(items);
