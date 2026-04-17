@@ -27,8 +27,12 @@ describe('buildCss', () => {
     expect(buildCss(settings)).toBe('');
   });
 
-  it('returns empty string when all toggles are off', () => {
-    expect(buildCss(ALL_OFF)).toBe('');
+  it('omits cleaner selectors and animation when all toggles are off', () => {
+    // Button/panel CSS is always injected when extension is enabled,
+    // but the vanish keyframes and cleaner selector list must be absent.
+    const css = buildCss(ALL_OFF);
+    expect(css).not.toContain('@keyframes yz-vanish');
+    expect(css).not.toMatch(/animation:\s*yz-vanish/);
   });
 
   it('includes the yz-vanish @keyframes definition', () => {
@@ -82,11 +86,17 @@ describe('buildCss', () => {
     expect(css).toMatch(/linear-gradient/);
   });
 
-  it('does not translate, scale, or rotate the element away', () => {
+  it('does not translate, scale, or rotate the cleaner element away', () => {
     const settings = { ...ALL_OFF, shorts: true };
     const css = buildCss(settings);
     // Element must disintegrate where it stands — no fly-out.
-    expect(css).not.toMatch(/transform:\s*[^;]*(?:scale|translate|rotate)/);
+    // Scope: check only the vanish keyframes / cleaner rule — not unrelated
+    // UI (the toggle slider rule uses translateX which is fine).
+    const start = css.indexOf('@keyframes yz-vanish');
+    expect(start).toBeGreaterThanOrEqual(0);
+    const panelStart = css.indexOf('#yz-filters-btn');
+    const cleanerBlock = css.slice(start, panelStart >= 0 ? panelStart : undefined);
+    expect(cleanerBlock).not.toMatch(/(?:scale|translate|rotate)/);
   });
 
   it('generates a non-empty ruleset with all toggles enabled', () => {
@@ -160,16 +170,30 @@ describe('buildCss — watched filter', () => {
   });
 });
 
-describe('buildCss — chip styles (bundled with watched filter)', () => {
-  it('includes chip styles when filter enabled', () => {
-    const settings: ZenSettings = { ...ALL_OFF, filterWatchedEnabled: true };
-    const css = buildCss(settings);
-    expect(css).toContain('#yz-chip-watched');
-    expect(css).toContain('[data-active="true"]');
+describe('buildCss — Filters button + panel styles', () => {
+  it('includes #yz-filters-btn when extension enabled', () => {
+    const css = buildCss({ ...DEFAULT_SETTINGS, enabled: true });
+    expect(css).toMatch(/#yz-filters-btn\s*\{/);
   });
 
-  it('excludes chip styles when filter disabled', () => {
-    const settings: ZenSettings = { ...ALL_OFF, filterWatchedEnabled: false };
-    expect(buildCss(settings)).not.toContain('#yz-chip-watched');
+  it('includes #yz-filters-panel when extension enabled', () => {
+    const css = buildCss({ ...DEFAULT_SETTINGS, enabled: true });
+    expect(css).toMatch(/#yz-filters-panel\s*\{/);
+  });
+
+  it('omits all styles when extension is disabled', () => {
+    const css = buildCss({ ...DEFAULT_SETTINGS, enabled: false });
+    expect(css).toBe('');
+  });
+
+  it('does not include old chip selectors', () => {
+    const css = buildCss(DEFAULT_SETTINGS);
+    expect(css).not.toContain('#yz-chip-watched');
+    expect(css).not.toContain('.yz-chip__');
+  });
+
+  it('renders button styles even when no cleaner / watched filter is active', () => {
+    const css = buildCss(ALL_OFF);
+    expect(css).toContain('#yz-filters-btn');
   });
 });
