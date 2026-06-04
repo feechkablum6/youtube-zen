@@ -62,6 +62,30 @@ describe('renderFilters', () => {
     expect(text).not.toMatch(/чип/);
   });
 
+  it('renders an enabled toggle matching current settings', () => {
+    const container = makeContainer();
+    renderFilters(container, {
+      ...DEFAULT_SETTINGS,
+      filterWatchedEnabled: true,
+    });
+    const checkbox = container.querySelector<HTMLInputElement>(
+      'input[type="checkbox"][data-key="filterWatchedEnabled"]'
+    );
+    expect(checkbox).not.toBeNull();
+    expect(checkbox!.checked).toBe(true);
+  });
+
+  it('writes enabled toggle changes to storage', () => {
+    const container = makeContainer();
+    renderFilters(container, DEFAULT_SETTINGS);
+    const checkbox = container.querySelector<HTMLInputElement>(
+      'input[type="checkbox"][data-key="filterWatchedEnabled"]'
+    )!;
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(setSpy).toHaveBeenCalledWith({ filterWatchedEnabled: true });
+  });
+
   it('writes new threshold to storage on input event (debounced)', async () => {
     const container = makeContainer();
     renderFilters(container, { ...DEFAULT_SETTINGS, filterWatchedThreshold: 20 });
@@ -72,10 +96,9 @@ describe('renderFilters', () => {
     expect(setSpy).toHaveBeenCalledWith({ filterWatchedThreshold: 50 });
   });
 
-  it('does not render an enabled toggle', () => {
+  it('does not mention a separate Filters button as required for enabling', () => {
     const container = makeContainer();
     renderFilters(container, DEFAULT_SETTINGS);
-    const checkbox = container.querySelector('input[type="checkbox"]');
-    expect(checkbox).toBeNull();
+    expect(container.textContent).not.toContain('кнопку «Фильтры»');
   });
 });

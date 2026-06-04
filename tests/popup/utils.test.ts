@@ -35,24 +35,28 @@ describe('countActiveRules', () => {
     'shorts', 'playlists', 'liked', 'yourVideos', 'downloads',
     'subscriptions', 'navigator', 'explore', 'reportButton', 'footer',
     'fixUblock', 'actionPanel',
+    'youList', 'youMyChannel', 'youHistory', 'youWatchLater',
+    'navMusic', 'navFilms', 'navLive',
+    'exploreMusic', 'exploreKids',
   ];
 
   it('counts all rules active when all defaults are true', () => {
     const result = countActiveRules(DEFAULT_SETTINGS, ALL_CLEANER_KEYS);
-    expect(result).toEqual({ active: 12, total: 12 });
+    // Из 21 ключа дефолт-false: filterWatchedEnabled (не в списке), youMyChannel, youHistory, youWatchLater.
+    expect(result).toEqual({ active: 18, total: 21 });
   });
 
   it('counts zero when all toggles are off', () => {
     const off = { ...DEFAULT_SETTINGS };
     for (const k of ALL_CLEANER_KEYS) off[k] = false;
     const result = countActiveRules(off, ALL_CLEANER_KEYS);
-    expect(result).toEqual({ active: 0, total: 12 });
+    expect(result).toEqual({ active: 0, total: 21 });
   });
 
   it('counts a partial subset correctly', () => {
     const partial = { ...DEFAULT_SETTINGS, shorts: false, playlists: false };
     const result = countActiveRules(partial, ALL_CLEANER_KEYS);
-    expect(result).toEqual({ active: 10, total: 12 });
+    expect(result).toEqual({ active: 16, total: 21 });
   });
 
   it('handles empty key list', () => {
@@ -88,10 +92,8 @@ describe('groupRulesByGroup', () => {
     const result = groupRulesByGroup(HIDE_RULES);
     const sidebar = result.get('sidebar')!;
     const keys = sidebar.map((e) => e.key);
-    expect(keys).toEqual([
-      'playlists', 'liked', 'yourVideos', 'downloads',
-      'subscriptions', 'navigator', 'explore', 'reportButton',
-    ]);
+    // После рефакторинга в sidebar остались плоские home, subscriptions и reportButton
+    expect(keys).toEqual(['home', 'subscriptions', 'reportButton']);
   });
 
   it('each entry includes key and label', () => {

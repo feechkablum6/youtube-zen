@@ -4,7 +4,9 @@ import { scanAll } from '../../src/content/filters/bootstrap';
 import {
   applyWatchedClass,
   CARD_SELECTORS,
+  isWatchedFilterActive,
   parseProgressPercent,
+  pathnameFromNavDetail,
   shouldHide,
 } from '../../src/content/filters/watched';
 import { homeCard, lockupCard, searchCard } from './fixtures';
@@ -132,6 +134,67 @@ describe('applyWatchedClass', () => {
     applyWatchedClass(card, 20);
     applyWatchedClass(card, 20);
     expect(card.classList.contains('yz-watched')).toBe(true);
+  });
+});
+
+describe('isWatchedFilterActive', () => {
+  it('is false when settings flag is off', () => {
+    expect(isWatchedFilterActive(false, '/')).toBe(false);
+    expect(isWatchedFilterActive(false, '/feed/history')).toBe(false);
+  });
+
+  it('is true on the home page when enabled', () => {
+    expect(isWatchedFilterActive(true, '/')).toBe(true);
+  });
+
+  it('is true on subscriptions feed when enabled', () => {
+    expect(isWatchedFilterActive(true, '/feed/subscriptions')).toBe(true);
+  });
+
+  it('is true on watch and search pages when enabled', () => {
+    expect(isWatchedFilterActive(true, '/watch')).toBe(true);
+    expect(isWatchedFilterActive(true, '/results')).toBe(true);
+  });
+
+  it('is false on /feed/history even when enabled', () => {
+    expect(isWatchedFilterActive(true, '/feed/history')).toBe(false);
+  });
+
+  it('is false on history sub-paths even when enabled', () => {
+    expect(isWatchedFilterActive(true, '/feed/history/search')).toBe(false);
+  });
+});
+
+describe('pathnameFromNavDetail', () => {
+  const origin = 'https://www.youtube.com';
+
+  it('returns pathname from a relative url', () => {
+    expect(pathnameFromNavDetail({ url: '/feed/history' }, origin)).toBe(
+      '/feed/history'
+    );
+  });
+
+  it('strips query and hash', () => {
+    expect(
+      pathnameFromNavDetail({ url: '/feed/history?foo=bar#x' }, origin)
+    ).toBe('/feed/history');
+  });
+
+  it('returns pathname from an absolute url', () => {
+    expect(
+      pathnameFromNavDetail(
+        { url: 'https://www.youtube.com/results?search_query=cats' },
+        origin
+      )
+    ).toBe('/results');
+  });
+
+  it('returns null when detail is missing or malformed', () => {
+    expect(pathnameFromNavDetail(null, origin)).toBeNull();
+    expect(pathnameFromNavDetail(undefined, origin)).toBeNull();
+    expect(pathnameFromNavDetail({}, origin)).toBeNull();
+    expect(pathnameFromNavDetail({ url: '' }, origin)).toBeNull();
+    expect(pathnameFromNavDetail({ url: 42 }, origin)).toBeNull();
   });
 });
 

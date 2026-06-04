@@ -14,7 +14,12 @@ import {
   applyOnLoad,
   installNavListener,
 } from './search-url-rewriter';
-import { applyWatchedClass, CARD_SELECTORS } from './watched';
+import {
+  applyWatchedClass,
+  CARD_SELECTORS,
+  isWatchedFilterActive,
+  pathnameFromNavDetail,
+} from './watched';
 
 const FILTER_ON_CLASS = 'yz-watched-filter-on';
 const SEARCH_KEYS = [
@@ -56,8 +61,16 @@ function onCardAdded(card: Element): void {
   applyWatchedClass(card, current.filterWatchedThreshold);
 }
 
-function syncHtmlClass(enabled: boolean): void {
-  document.documentElement.classList.toggle(FILTER_ON_CLASS, enabled);
+function syncHtmlClassForPath(pathname: string): void {
+  const active = isWatchedFilterActive(
+    current.filterWatchedEnabled,
+    pathname
+  );
+  document.documentElement.classList.toggle(FILTER_ON_CLASS, active);
+}
+
+function syncHtmlClass(): void {
+  syncHtmlClassForPath(location.pathname);
 }
 
 function syncUi(): void {
@@ -69,7 +82,7 @@ function syncUi(): void {
 
 function applySettings(next: ZenSettings): void {
   current = next;
-  syncHtmlClass(current.filterWatchedEnabled);
+  syncHtmlClass();
   scanAll(document, current.filterWatchedThreshold);
   syncUi();
 }
@@ -154,6 +167,20 @@ export function initWatchedFilter(): void {
 
   navDispose ??= installNavListener(currentFilters);
 
+  // Update the html-class gate as early as possible: yt-navigate-start fires
+  // before YouTube paints the new page, so we avoid a flash where every
+  // /feed/history card is briefly hidden by display:none.
+  window.addEventListener(
+    'yt-navigate-start',
+    (event) => {
+      const detail = (event as CustomEvent).detail;
+      const pathname = pathnameFromNavDetail(detail, window.location.origin);
+      if (pathname === null) return;
+      syncHtmlClassForPath(pathname);
+    },
+    true
+  );
+
   if (!tryMountButton()) {
     const mountObserver = new MutationObserver(() => {
       if (tryMountButton()) mountObserver.disconnect();
@@ -165,6 +192,7 @@ export function initWatchedFilter(): void {
   }
 
   window.addEventListener('yt-navigate-finish', () => {
+    syncHtmlClass();
     scanAll(document, current.filterWatchedThreshold);
   });
 

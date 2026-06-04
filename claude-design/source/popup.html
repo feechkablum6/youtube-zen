@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube Zen</title>
+  <link rel="stylesheet" href="./src/popup/popup.css">
+</head>
+<body>
+  <div class="popup">
+    <header class="popup-header">
+      <div class="logo" aria-hidden="true">Z</div>
+      <div class="title">YouTube Zen</div>
+      <label class="master-switch">
+        <input type="checkbox" id="master">
+        <span class="master-slider"></span>
+      </label>
+    </header>
+    <div class="popup-body">
+      <nav class="rail" id="rail" aria-label="Разделы"></nav>
+      <main class="content" id="content"></main>
+    </div>
+  </div>
+  <script type="module" src="./src/popup/popup.ts"></script>
+</body>
+</html>

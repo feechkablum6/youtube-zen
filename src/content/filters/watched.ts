@@ -57,3 +57,30 @@ export const CARD_SELECTORS: readonly string[] = [
 export function applyWatchedClass(card: Element, threshold: number): void {
   card.classList.toggle('yz-watched', shouldHide(card, threshold));
 }
+
+// On /feed/history every card is by definition watched, so the filter would
+// hide the entire page. Disable it on that path regardless of the toggle.
+export function isWatchedFilterActive(
+  enabled: boolean,
+  pathname: string
+): boolean {
+  if (!enabled) return false;
+  return !pathname.startsWith('/feed/history');
+}
+
+// `yt-navigate-start` carries the destination URL in event.detail.url before
+// YouTube paints the new page — extract its pathname so we can update the
+// html-class gate ahead of render and avoid a flash of hidden cards.
+export function pathnameFromNavDetail(
+  detail: unknown,
+  origin: string
+): string | null {
+  if (!detail || typeof detail !== 'object') return null;
+  const url = (detail as { url?: unknown }).url;
+  if (typeof url !== 'string' || url.length === 0) return null;
+  try {
+    return new URL(url, origin).pathname;
+  } catch {
+    return null;
+  }
+}

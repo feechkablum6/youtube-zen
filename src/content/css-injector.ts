@@ -1,6 +1,6 @@
 import type { ToggleKey, ZenSettings } from '../shared/types';
 
-import { HIDE_RULES } from './selectors';
+import { HIDE_RULES, SIDEBAR_LISTS } from './selectors';
 
 // "Disintegrate on the spot" animation. The element stays in place while
 // a mask gradient sweeps bottom-to-top (nether parts dissolve first,
@@ -170,8 +170,28 @@ export function buildCss(settings: ZenSettings): string {
   const cleanerSelectors: string[] = [];
 
   for (const [key, rule] of Object.entries(HIDE_RULES)) {
+    const ruleDef = rule;
+    if (!ruleDef) continue;
     if (settings[key as ToggleKey]) {
-      cleanerSelectors.push(...rule.selectors);
+      cleanerSelectors.push(...ruleDef.selectors);
+    }
+  }
+
+  // Вложенные списки сайдбара. Семантика:
+  //   master OFF → ничего из списка не скрывается
+  //   master ON + ни одного ребёнка ON → ничего
+  //   master ON + все дети ON → sectionSelectors (целиком вся секция)
+  //   master ON + частично детей ON → selectors только включённых детей
+  for (const list of SIDEBAR_LISTS) {
+    if (!settings[list.masterKey]) continue;
+    const enabledChildren = list.children.filter((c) => settings[c.key]);
+    if (enabledChildren.length === 0) continue;
+    if (enabledChildren.length === list.children.length) {
+      cleanerSelectors.push(...list.sectionSelectors);
+    } else {
+      for (const child of enabledChildren) {
+        cleanerSelectors.push(...child.selectors);
+      }
     }
   }
 

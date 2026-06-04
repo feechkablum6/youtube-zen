@@ -4,55 +4,67 @@ import { HIDE_RULES } from '../src/content/selectors';
 import type { HideRule, ToggleKey } from '../src/shared/types';
 
 describe('HIDE_RULES', () => {
+  // Плоские правила после рефакторинга (вложенные списки уехали в SIDEBAR_LISTS).
   const expectedKeys: ToggleKey[] = [
     'shorts',
-    'playlists',
-    'liked',
-    'yourVideos',
-    'downloads',
+    'home',
     'subscriptions',
-    'navigator',
-    'explore',
     'reportButton',
     'footer',
     'fixUblock',
     'actionPanel',
   ];
 
-  it('has an entry for every ToggleKey', () => {
+  it('has a flat entry for every non-nested toggle', () => {
     for (const key of expectedKeys) {
-      expect(HIDE_RULES).toHaveProperty(key);
+      expect(HIDE_RULES, `${key} missing`).toHaveProperty(key);
     }
   });
 
-  it('has no extra keys beyond ToggleKey', () => {
+  it('has no extra flat keys beyond the non-nested set', () => {
     expect(Object.keys(HIDE_RULES).sort()).toEqual([...expectedKeys].sort());
   });
 
-  it('every rule has non-empty selectors array', () => {
+  it('every flat rule has non-empty selectors array', () => {
     for (const [key, rule] of Object.entries(HIDE_RULES)) {
-      expect(rule.selectors.length, `${key} has empty selectors`).toBeGreaterThan(0);
+      const def = rule as HideRule;
+      expect(def.selectors.length, `${key} has empty selectors`).toBeGreaterThan(0);
     }
   });
 
-  it('every rule has a non-empty label', () => {
+  it('every flat rule has a non-empty label', () => {
     for (const [key, rule] of Object.entries(HIDE_RULES)) {
-      expect(rule.label.length, `${key} has empty label`).toBeGreaterThan(0);
+      const def = rule as HideRule;
+      expect(def.label.length, `${key} has empty label`).toBeGreaterThan(0);
     }
   });
 
-  it('every rule has a valid group', () => {
+  it('every flat rule has a valid group', () => {
     const validGroups = ['feed', 'sidebar', 'video', 'footer'];
     for (const [key, rule] of Object.entries(HIDE_RULES)) {
-      expect(validGroups, `${key} has invalid group "${rule.group}"`).toContain(rule.group);
+      const def = rule as HideRule;
+      expect(validGroups, `${key} has invalid group "${def.group}"`).toContain(def.group);
     }
   });
 
   it('every selector is a non-empty string', () => {
     for (const [key, rule] of Object.entries(HIDE_RULES)) {
-      for (const selector of rule.selectors) {
+      const def = rule as HideRule;
+      for (const selector of def.selectors) {
         expect(typeof selector).toBe('string');
         expect(selector.length, `${key} has empty selector`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('every selector is syntactically valid', () => {
+    for (const [key, rule] of Object.entries(HIDE_RULES)) {
+      const def = rule as HideRule;
+      for (const selector of def.selectors) {
+        expect(
+          () => document.querySelector(selector),
+          `${key}: ${selector}`
+        ).not.toThrow();
       }
     }
   });
@@ -60,15 +72,14 @@ describe('HIDE_RULES', () => {
   // ── Проверки конкретных селекторов по данным DOM-инспекции ──────────────────
 
   describe('shorts — лента и сайдбар', () => {
+    const rule = HIDE_RULES.shorts as HideRule;
+    const selectors = rule.selectors;
+
     it('скрывает запись Shorts в сайдбаре (ytd-guide-entry-renderer с title="Shorts")', () => {
-      const selectors = HIDE_RULES.shorts.selectors;
       expect(selectors.some(s => s.includes('ytd-guide-entry-renderer') && s.includes('title="Shorts"'))).toBe(true);
     });
 
     it('ловит новую раскладку Shorts (ytm-shorts-lockup-view-model-v2) — подтверждено Claude-in-Chrome', () => {
-      const selectors = HIDE_RULES.shorts.selectors;
-      // YouTube A/B: Shorts рендерятся как индивидуальные ytd-rich-item-renderer
-      // без атрибута [is-shorts], с ytm-shorts-lockup-view-model-v2 внутри.
       expect(
         selectors.some(
           (s) => s.includes('ytd-rich-item-renderer') && s.includes('ytm-shorts-lockup-view-model-v2')
@@ -77,7 +88,6 @@ describe('HIDE_RULES', () => {
     });
 
     it('ловит shelf новой раскладки (ytd-rich-shelf-renderer с ytm-shorts-lockup-view-model-v2)', () => {
-      const selectors = HIDE_RULES.shorts.selectors;
       expect(
         selectors.some(
           (s) => s.includes('ytd-rich-shelf-renderer') && s.includes('ytm-shorts-lockup-view-model-v2')
@@ -85,41 +95,46 @@ describe('HIDE_RULES', () => {
       ).toBe(true);
     });
 
+    it('скрывает внешний ytd-rich-section-renderer, чтобы полка Shorts не оставляла пустую строку', () => {
+      expect(
+        selectors.some(
+          (s) => s.startsWith('ytd-rich-section-renderer') && s.includes('ytd-rich-shelf-renderer')
+        )
+      ).toBe(true);
+    });
+
     it('сохраняет старые селекторы для совместимости', () => {
-      const selectors = HIDE_RULES.shorts.selectors;
-      // Пользователи, попавшие в старую раскладку, должны продолжать получать скрытие.
       expect(selectors).toContain('ytd-rich-shelf-renderer[is-shorts]');
       expect(selectors).toContain('ytd-reel-shelf-renderer');
     });
   });
 
-  describe('playlists — запись в разделе «ВЫ»', () => {
-    it('не таргетирует ytd-guide-section-renderer (скрывает весь раздел ВЫ)', () => {
-      const selectors = HIDE_RULES.playlists.selectors;
-      const hidesWholeSection = selectors.some(
-        s => s.startsWith('ytd-guide-section-renderer') && s.includes('/feed/playlists')
-      );
-      expect(hidesWholeSection, 'ytd-guide-section-renderer:has(/feed/playlists) скрывает весь раздел ВЫ').toBe(false);
+  describe('home — кнопка «Главная» в сайдбаре', () => {
+    const rule = HIDE_RULES.home as HideRule;
+
+    it('таргетирует запись «Главная» по ссылке href="/"', () => {
+      expect(
+        rule.selectors.some(
+          (s) => s.includes('ytd-guide-entry-renderer') && s.includes('a[href="/"]')
+        )
+      ).toBe(true);
     });
 
-    it('таргетирует конкретный ytd-guide-entry-renderer с /feed/playlists', () => {
-      const selectors = HIDE_RULES.playlists.selectors;
-      const hasCorrect = selectors.some(
-        s => s.startsWith('ytd-guide-entry-renderer') && s.includes('/feed/playlists')
-      );
-      expect(hasCorrect).toBe(true);
+    it('относится к группе sidebar', () => {
+      expect(rule.group).toBe('sidebar');
     });
   });
 
   describe('subscriptions — секция в сайдбаре', () => {
+    const rule = HIDE_RULES.subscriptions as HideRule;
+    const selectors = rule.selectors;
+
     it('не использует несуществующий #header', () => {
-      const selectors = HIDE_RULES.subscriptions.selectors;
       const hasDeadPattern = selectors.some(s => s.includes('> #header'));
       expect(hasDeadPattern).toBe(false);
     });
 
     it('находит секцию по ссылке /feed/subscriptions — /feed/channels не существует в DOM (подтверждено Claude-in-Chrome)', () => {
-      const selectors = HIDE_RULES.subscriptions.selectors;
       const hasWrong = selectors.some(s => s.includes('/feed/channels'));
       expect(hasWrong, '/feed/channels не существует в guide — используй /feed/subscriptions').toBe(false);
 
@@ -130,51 +145,37 @@ describe('HIDE_RULES', () => {
     });
   });
 
-  describe('navigator — секция «Навигатор» (Музыка/Фильмы/Игры)', () => {
-    it('не использует :first-child (скрывает главную навигацию вместо Навигатора)', () => {
-      const selectors = HIDE_RULES.navigator.selectors;
-      const hasFirstChild = selectors.some(s => s.includes(':first-child'));
-      expect(hasFirstChild).toBe(false);
-    });
-
-    it('таргетирует секцию «Навигатор» по ссылке /gaming (подтверждено DOM-инспекцией)', () => {
-      const selectors = HIDE_RULES.navigator.selectors;
-      const hasCorrect = selectors.some(
-        s => s.includes('ytd-guide-section-renderer') && s.includes('/gaming')
-      );
-      expect(hasCorrect).toBe(true);
-    });
-  });
-
   describe('reportButton — кнопка жалобы в сайдбаре', () => {
+    const rule = HIDE_RULES.reportButton as HideRule;
+
     it('имеет группу sidebar, а не video', () => {
-      expect(HIDE_RULES.reportButton.group).toBe('sidebar');
+      expect(rule.group).toBe('sidebar');
     });
 
     it('таргетирует /reporthistory в сайдбаре (подтверждено DOM-инспекцией)', () => {
-      const selectors = HIDE_RULES.reportButton.selectors;
-      const hasCorrect = selectors.some(s => s.includes('/reporthistory'));
+      const hasCorrect = rule.selectors.some(s => s.includes('/reporthistory'));
       expect(hasCorrect).toBe(true);
     });
 
     it('не таргетирует ytd-menu-service-item-renderer (контекстное меню под видео)', () => {
-      const selectors = HIDE_RULES.reportButton.selectors;
-      const hasVideoMenu = selectors.some(s => s.includes('ytd-menu-service-item-renderer'));
+      const hasVideoMenu = rule.selectors.some(s => s.includes('ytd-menu-service-item-renderer'));
       expect(hasVideoMenu).toBe(false);
     });
   });
 
   describe('fixUblock — чистка пустых рекламных контейнеров', () => {
+    const rule = HIDE_RULES.fixUblock as HideRule;
+
     it('существует правило fixUblock', () => {
       expect(HIDE_RULES).toHaveProperty('fixUblock');
     });
 
     it('имеет группу feed', () => {
-      expect(HIDE_RULES.fixUblock.group).toBe('feed');
+      expect(rule.group).toBe('feed');
     });
 
     it('таргетирует прямые ad-врапперы (CSS-фолбэк до того как uBlock их удалит)', () => {
-      const selectors = HIDE_RULES.fixUblock.selectors;
+      const selectors = rule.selectors;
       expect(selectors).toContain('ytd-ad-slot-renderer');
       expect(selectors).toContain('ytd-in-feed-ad-layout-renderer');
       expect(selectors).toContain('#masthead-ad');
@@ -185,59 +186,46 @@ describe('HIDE_RULES', () => {
       // `:has(ytd-ad-slot-renderer)` больше не матчит, и пустой
       // ytd-rich-item-renderer снова становится видимым. Скрытие таких
       // «трупов» делает JS-наблюдатель ublock-cleaner.ts.
-      const selectors = HIDE_RULES.fixUblock.selectors;
+      const selectors = rule.selectors;
       expect(selectors.some(s => s.includes(':has(ytd-ad-slot-renderer)'))).toBe(false);
     });
 
     it('таргетирует in-feed рекламу ytd-in-feed-ad-layout-renderer', () => {
-      const selectors = HIDE_RULES.fixUblock.selectors;
+      const selectors = rule.selectors;
       expect(selectors.some(s => s.includes('ytd-in-feed-ad-layout-renderer'))).toBe(true);
     });
   });
 
   describe('actionPanel — кнопки хедера и под видео', () => {
+    const rule = HIDE_RULES.actionPanel as HideRule;
+    const selectors = rule.selectors;
+
     it('существует правило actionPanel', () => {
       expect(HIDE_RULES).toHaveProperty('actionPanel');
     });
     it('имеет группу video', () => {
-      expect(HIDE_RULES.actionPanel.group).toBe('video');
+      expect(rule.group).toBe('video');
     });
     it('скрывает голосовой поиск в хедере', () => {
-      expect(HIDE_RULES.actionPanel.selectors.some(s => s.includes('#voice-search-button'))).toBe(true);
+      expect(selectors.some(s => s.includes('#voice-search-button'))).toBe(true);
     });
     it('скрывает кнопку Создать в хедере', () => {
-      expect(HIDE_RULES.actionPanel.selectors.some(s => s.includes('ytd-masthead') && s.includes('Создать'))).toBe(true);
+      expect(selectors.some(s => s.includes('ytd-masthead') && s.includes('Создать'))).toBe(true);
     });
     it('скрывает уведомления', () => {
-      expect(HIDE_RULES.actionPanel.selectors.some(s => s.includes('ytd-notification-topbar-button-renderer'))).toBe(true);
+      expect(selectors.some(s => s.includes('ytd-notification-topbar-button-renderer'))).toBe(true);
     });
     it('скрывает Поделиться (#top-level-buttons-computed > yt-button-view-model)', () => {
-      expect(HIDE_RULES.actionPanel.selectors.some(s => s.includes('#top-level-buttons-computed') && s.includes('yt-button-view-model'))).toBe(true);
+      expect(selectors.some(s => s.includes('#top-level-buttons-computed') && s.includes('yt-button-view-model'))).toBe(true);
     });
     it('скрывает #flexible-item-buttons (Сохранить / Клип / Скачать)', () => {
-      expect(HIDE_RULES.actionPanel.selectors.some(s => s.includes('#flexible-item-buttons'))).toBe(true);
+      expect(selectors.some(s => s.includes('#flexible-item-buttons'))).toBe(true);
     });
     it('скрывает вкладки рекомендаций (iron-selector#chips)', () => {
-      expect(HIDE_RULES.actionPanel.selectors.some(s => s.includes('iron-selector#chips'))).toBe(true);
+      expect(selectors.some(s => s.includes('iron-selector#chips'))).toBe(true);
     });
     it('скрывает кнопку экранной клавиатуры в поиске (ytd-text-input-assistant)', () => {
-      expect(HIDE_RULES.actionPanel.selectors.some(s => s.includes('ytd-text-input-assistant'))).toBe(true);
-    });
-  });
-
-  describe('explore — секция «Другие возможности»', () => {
-    it('не использует несуществующий #header', () => {
-      const selectors = HIDE_RULES.explore.selectors;
-      const hasDeadPattern = selectors.some(s => s.includes('> #header'));
-      expect(hasDeadPattern).toBe(false);
-    });
-
-    it('находит секцию по ссылке /premium внутри ytd-guide-entry-renderer', () => {
-      const selectors = HIDE_RULES.explore.selectors;
-      const hasCorrect = selectors.some(
-        s => s.includes('ytd-guide-section-renderer') && s.includes('/premium')
-      );
-      expect(hasCorrect).toBe(true);
+      expect(selectors.some(s => s.includes('ytd-text-input-assistant'))).toBe(true);
     });
   });
 });

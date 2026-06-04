@@ -6,6 +6,7 @@ import type { ZenSettings } from '../src/shared/types';
 const ALL_KEYS: (keyof ZenSettings)[] = [
   'enabled',
   'shorts',
+  'home',
   'playlists',
   'liked',
   'yourVideos',
@@ -24,9 +25,24 @@ const ALL_KEYS: (keyof ZenSettings)[] = [
   'filterSearchDuration',
   'filterSearchSort',
   'filterSearchType',
+  'youList',
+  'youMyChannel',
+  'youHistory',
+  'youWatchLater',
+  'navMusic',
+  'navFilms',
+  'navLive',
+  'exploreMusic',
+  'exploreKids',
 ];
 
-const OFF_BY_DEFAULT: (keyof ZenSettings)[] = ['filterWatchedEnabled'];
+const OFF_BY_DEFAULT: (keyof ZenSettings)[] = [
+  'filterWatchedEnabled',
+  'home',
+  'youMyChannel',
+  'youHistory',
+  'youWatchLater',
+];
 
 describe('DEFAULT_SETTINGS', () => {
   it('has all ZenSettings keys', () => {
