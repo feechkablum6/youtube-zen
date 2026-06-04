@@ -41,7 +41,7 @@ interface YtNavStartDetail {
   };
 }
 
-function toYtNavigationRelativeUrl(url: URL): string {
+export function toYtNavigationRelativeUrl(url: URL): string {
   const search = url.searchParams.toString();
   const sp = url.searchParams.get('sp');
   const safeSearch = sp

@@ -38,6 +38,17 @@ function buildExtensionScriptsPlugin() {
           target: ['chrome120'],
           tsconfig: resolve(root, 'tsconfig.json'),
         }),
+        esbuildBuild({
+          bundle: true,
+          entryPoints: [resolve(root, 'src/content/page-bridge.ts')],
+          format: 'iife',
+          legalComments: 'none',
+          outfile: resolve(distDir, 'page-bridge.js'),
+          platform: 'browser',
+          sourcemap: true,
+          target: ['chrome120'],
+          tsconfig: resolve(root, 'tsconfig.json'),
+        }),
       ]);
 
       copyFileSync(

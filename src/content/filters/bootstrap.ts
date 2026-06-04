@@ -15,6 +15,7 @@ import {
   applySearchFiltersToUrl,
   applyOnLoad,
   installNavListener,
+  toYtNavigationRelativeUrl,
 } from './search-url-rewriter';
 import {
   applyWatchedClass,
@@ -36,6 +37,31 @@ const SEARCH_BUTTON_SELECTOR = [
   'button.ytSearchboxComponentSearchButton',
   '#search-icon-legacy',
 ].join(', ');
+const PAGE_BRIDGE_SCRIPT = 'page-bridge.js';
+export const PAGE_SEARCH_NAVIGATE_EVENT = 'yz:search-navigate';
+export const PAGE_SEARCH_NAVIGATE_RESULT_EVENT = 'yz:search-navigate-result';
+
+interface YtSearchEndpoint {
+  commandMetadata: {
+    webCommandMetadata: {
+      url: string;
+      webPageType: 'WEB_PAGE_TYPE_SEARCH';
+      rootVe: 4724;
+      apiUrl: '/youtubei/v1/search';
+    };
+  };
+  searchEndpoint: {
+    query: string;
+    params?: string;
+  };
+}
+
+interface YtdAppWithNavigation extends Element {
+  handleNavigate?: (payload: {
+    command: YtSearchEndpoint;
+    form: { reload: false };
+  }) => void;
+}
 
 export function scanAll(root: ParentNode, threshold: number): void {
   const cards = root.querySelectorAll(CARD_SELECTORS.join(','));
@@ -188,7 +214,87 @@ function interceptSearchIntent(
   const next = applySearchFiltersToUrl(url, filters);
   event.preventDefault();
   event.stopImmediatePropagation();
-  assign(next.toString());
+  navigateToSearchResults(next, query, assign);
+}
+
+export function navigateToSearchResults(
+  url: URL,
+  query: string,
+  assign: (url: string) => void = (target) => window.location.assign(target)
+): void {
+  const relativeUrl = toYtNavigationRelativeUrl(url);
+  const params = url.searchParams.get('sp') ?? undefined;
+
+  if (navigateViaPageBridge(relativeUrl, query, params)) return;
+
+  const app = document.querySelector('ytd-app') as YtdAppWithNavigation | null;
+  if (typeof app?.handleNavigate === 'function') {
+    try {
+      const searchEndpoint: YtSearchEndpoint['searchEndpoint'] = { query };
+      if (params) searchEndpoint.params = params;
+
+      app.handleNavigate({
+        command: {
+          commandMetadata: {
+            webCommandMetadata: {
+              url: relativeUrl,
+              webPageType: 'WEB_PAGE_TYPE_SEARCH',
+              rootVe: 4724,
+              apiUrl: '/youtubei/v1/search',
+            },
+          },
+          searchEndpoint,
+        },
+        form: { reload: false },
+      });
+      return;
+    } catch {
+      // Fall back to a normal navigation if YouTube changes handleNavigate.
+    }
+  }
+
+  assign(url.toString());
+}
+
+function navigateViaPageBridge(
+  url: string,
+  query: string,
+  params: string | undefined
+): boolean {
+  const id = `${Date.now()}:${Math.random().toString(36).slice(2)}`;
+  let handled = false;
+  const onResult = (event: Event): void => {
+    const raw = (event as CustomEvent).detail;
+    if (typeof raw !== 'string') return;
+
+    try {
+      const detail = JSON.parse(raw) as { id?: unknown; handled?: unknown };
+      if (detail.id === id && detail.handled === true) handled = true;
+    } catch {
+      return;
+    }
+  };
+
+  window.addEventListener(PAGE_SEARCH_NAVIGATE_RESULT_EVENT, onResult, true);
+  window.dispatchEvent(
+    new CustomEvent(PAGE_SEARCH_NAVIGATE_EVENT, {
+      detail: JSON.stringify({ id, url, query, params }),
+    })
+  );
+  window.removeEventListener(PAGE_SEARCH_NAVIGATE_RESULT_EVENT, onResult, true);
+  return handled;
+}
+
+function installPageBridge(): void {
+  const root = document.documentElement;
+  if (!root || root.dataset.yzPageBridgeInjected === 'true') return;
+  if (!chrome.runtime?.getURL) return;
+
+  root.dataset.yzPageBridgeInjected = 'true';
+  const script = document.createElement('script');
+  script.src = chrome.runtime.getURL(PAGE_BRIDGE_SCRIPT);
+  script.onload = () => script.remove();
+  (document.head ?? root).appendChild(script);
 }
 
 function installSearchIntentInterceptor(): void {
@@ -269,6 +375,8 @@ function tryMountButton(): boolean {
 }
 
 export function initWatchedFilter(): void {
+  installPageBridge();
+
   const defaults = DEFAULT_SETTINGS as unknown as Record<string, unknown>;
   chrome.storage.sync.get(defaults, (stored) => {
     applySettings(stored as unknown as ZenSettings);

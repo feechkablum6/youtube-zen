@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   applyActiveUploadDateToCurrentSearch,
@@ -6,6 +6,8 @@ import {
   handleSearchButtonClick,
   handleSearchFormSubmit,
   handleSearchInputKeydown,
+  PAGE_SEARCH_NAVIGATE_EVENT,
+  PAGE_SEARCH_NAVIGATE_RESULT_EVENT,
 } from '../../src/content/filters/bootstrap';
 import { DEFAULT_SETTINGS } from '../../src/shared/defaults';
 import type { SearchFilters } from '../../src/shared/types';
@@ -194,6 +196,86 @@ describe('handleSearchFormSubmit', () => {
     expect(next.pathname).toBe('/results');
     expect(next.searchParams.get('search_query')).toBe('cats enter');
     expect(next.searchParams.get('sp')).toBe('EgIIAg==');
+  });
+
+  it('uses page bridge SPA navigation instead of fallback assign when available', () => {
+    const { input } = searchForm('cats bridge');
+    const assigned: string[] = [];
+    let payload: {
+      id: string;
+      url: string;
+      query: string;
+      params?: string;
+    } | null = null;
+    const onNavigate = (event: Event): void => {
+      payload = JSON.parse((event as CustomEvent).detail);
+      window.dispatchEvent(
+        new CustomEvent(PAGE_SEARCH_NAVIGATE_RESULT_EVENT, {
+          detail: JSON.stringify({ id: payload!.id, handled: true }),
+        })
+      );
+    };
+    window.addEventListener(PAGE_SEARCH_NAVIGATE_EVENT, onNavigate, true);
+    const event = new KeyboardEvent('keydown', {
+      bubbles: true,
+      cancelable: true,
+      key: 'Enter',
+    });
+    Object.defineProperty(event, 'target', { value: input });
+
+    try {
+      handleSearchInputKeydown(
+        event,
+        { ...DEFAULT_FILTERS, uploadDate: 'week' },
+        (url) => assigned.push(url)
+      );
+    } finally {
+      window.removeEventListener(PAGE_SEARCH_NAVIGATE_EVENT, onNavigate, true);
+    }
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(assigned).toEqual([]);
+    expect(payload).toMatchObject({
+      url: '/results?search_query=cats+bridge&sp=EgIIAw==',
+      query: 'cats bridge',
+      params: 'EgIIAw==',
+    });
+  });
+
+  it('uses direct YouTube SPA navigation if bridge is unavailable in the same JS world', () => {
+    const { input } = searchForm('cats spa');
+    const handleNavigate = vi.fn();
+    const app = document.createElement('ytd-app') as HTMLElement & {
+      handleNavigate: typeof handleNavigate;
+    };
+    app.handleNavigate = handleNavigate;
+    document.body.appendChild(app);
+    const assigned: string[] = [];
+    const event = new KeyboardEvent('keydown', {
+      bubbles: true,
+      cancelable: true,
+      key: 'Enter',
+    });
+    Object.defineProperty(event, 'target', { value: input });
+
+    handleSearchInputKeydown(
+      event,
+      { ...DEFAULT_FILTERS, uploadDate: 'week' },
+      (url) => assigned.push(url)
+    );
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(assigned).toEqual([]);
+    expect(handleNavigate).toHaveBeenCalledTimes(1);
+    const payload = handleNavigate.mock.calls[0][0];
+    expect(payload.form).toEqual({ reload: false });
+    expect(payload.command.commandMetadata.webCommandMetadata.url).toBe(
+      '/results?search_query=cats+spa&sp=EgIIAw=='
+    );
+    expect(payload.command.searchEndpoint).toEqual({
+      query: 'cats spa',
+      params: 'EgIIAw==',
+    });
   });
 
   it('does not intercept non-Enter search keydown', () => {
