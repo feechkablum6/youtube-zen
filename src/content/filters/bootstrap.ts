@@ -31,6 +31,11 @@ const SEARCH_KEYS = [
   'filterSearchType',
 ] as const;
 const UPLOAD_DATE_FALLBACK_URL_KEY = 'yz-upload-date-fallback-url';
+const SEARCH_INPUT_SELECTOR = 'input[name="search_query"]';
+const SEARCH_BUTTON_SELECTOR = [
+  'button.ytSearchboxComponentSearchButton',
+  '#search-icon-legacy',
+].join(', ');
 
 export function scanAll(root: ParentNode, threshold: number): void {
   const cards = root.querySelectorAll(CARD_SELECTORS.join(','));
@@ -127,6 +132,89 @@ export function applyActiveUploadDateToCurrentSearch(
   assign(nextUrl);
 }
 
+export function handleSearchFormSubmit(
+  event: SubmitEvent,
+  filters: SearchFilters,
+  assign: (url: string) => void = (url) => window.location.assign(url)
+): void {
+  const form = event.target;
+  if (!(form instanceof HTMLFormElement)) return;
+  const input = form.querySelector<HTMLInputElement>(SEARCH_INPUT_SELECTOR);
+  interceptSearchIntent(event, input, filters, assign);
+}
+
+export function handleSearchInputKeydown(
+  event: KeyboardEvent,
+  filters: SearchFilters,
+  assign: (url: string) => void = (url) => window.location.assign(url)
+): void {
+  if (event.key !== 'Enter' || event.isComposing) return;
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement)) return;
+  if (!target.matches(SEARCH_INPUT_SELECTOR)) return;
+  interceptSearchIntent(event, target, filters, assign);
+}
+
+export function handleSearchButtonClick(
+  event: MouseEvent,
+  filters: SearchFilters,
+  assign: (url: string) => void = (url) => window.location.assign(url)
+): void {
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+  const button = target.closest(SEARCH_BUTTON_SELECTOR);
+  if (!button) return;
+
+  const input =
+    button
+      .closest('form')
+      ?.querySelector<HTMLInputElement>(SEARCH_INPUT_SELECTOR) ??
+    document.querySelector<HTMLInputElement>(SEARCH_INPUT_SELECTOR);
+  interceptSearchIntent(event, input, filters, assign);
+}
+
+function interceptSearchIntent(
+  event: Event,
+  input: HTMLInputElement | null | undefined,
+  filters: SearchFilters,
+  assign: (url: string) => void
+): void {
+  if (filters.uploadDate === 'any') return;
+  const query = input?.value.trim();
+  if (!query) return;
+
+  const url = new URL('/results', window.location.origin);
+  url.searchParams.set('search_query', query);
+  const next = applySearchFiltersToUrl(url, filters);
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  assign(next.toString());
+}
+
+function installSearchIntentInterceptor(): void {
+  document.addEventListener(
+    'submit',
+    (event) => {
+      handleSearchFormSubmit(event as SubmitEvent, currentFilters());
+    },
+    true
+  );
+  document.addEventListener(
+    'keydown',
+    (event) => {
+      handleSearchInputKeydown(event, currentFilters());
+    },
+    true
+  );
+  document.addEventListener(
+    'click',
+    (event) => {
+      handleSearchButtonClick(event, currentFilters());
+    },
+    true
+  );
+}
+
 function positionPanel(btn: HTMLElement, panel: HTMLElement): void {
   const rect = btn.getBoundingClientRect();
   panel.style.position = 'fixed';
@@ -194,6 +282,7 @@ export function initWatchedFilter(): void {
   );
 
   navDispose ??= installNavListener(currentFilters);
+  installSearchIntentInterceptor();
 
   // Update the html-class gate as early as possible: yt-navigate-start fires
   // before YouTube paints the new page, so we avoid a flash where every
