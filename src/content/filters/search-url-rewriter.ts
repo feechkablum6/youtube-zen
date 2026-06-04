@@ -1,14 +1,21 @@
 import type { SearchFilters } from '../../shared/types';
 import { encodeSp } from './sp-encoder';
 
+export function applySearchFiltersToUrl(url: URL, filters: SearchFilters): URL {
+  if (url.pathname !== '/results') return url;
+
+  const next = new URL(url.toString());
+  const sp = encodeSp(filters);
+  if (sp) next.searchParams.set('sp', decodeURIComponent(sp));
+  else next.searchParams.delete('sp');
+  return next;
+}
+
 export function rewriteIfNeeded(url: URL, filters: SearchFilters): URL {
   if (url.pathname !== '/results') return url;
-  if (url.searchParams.has('sp')) return url;
   const sp = encodeSp(filters);
   if (!sp) return url;
-  const next = new URL(url.toString());
-  next.searchParams.set('sp', decodeURIComponent(sp));
-  return next;
+  return applySearchFiltersToUrl(url, filters);
 }
 
 const APPLIED_FLAG = 'yz-sp-applied';
@@ -34,6 +41,15 @@ interface YtNavStartDetail {
   };
 }
 
+function toYtNavigationRelativeUrl(url: URL): string {
+  const search = url.searchParams.toString();
+  const sp = url.searchParams.get('sp');
+  const safeSearch = sp
+    ? search.replace(`sp=${encodeURIComponent(sp)}`, `sp=${sp}`)
+    : search;
+  return `${url.pathname}${safeSearch ? `?${safeSearch}` : ''}${url.hash}`;
+}
+
 export function installNavListener(
   getFilters: () => SearchFilters
 ): () => void {
@@ -44,8 +60,7 @@ export function installNavListener(
     const target = new URL(detailUrl, window.location.origin);
     const rewritten = rewriteIfNeeded(target, getFilters());
     if (rewritten.toString() === target.toString()) return;
-    const nextRelative =
-      rewritten.pathname + rewritten.search + rewritten.hash;
+    const nextRelative = toYtNavigationRelativeUrl(rewritten);
     detail!.url = nextRelative;
     const meta = detail?.endpoint?.commandMetadata?.webCommandMetadata;
     if (meta && typeof meta.url === 'string') meta.url = nextRelative;

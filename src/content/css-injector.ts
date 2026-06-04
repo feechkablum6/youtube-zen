@@ -40,39 +40,59 @@ const KEYFRAMES = `@keyframes yz-vanish {
 const BUTTON_AND_PANEL_CSS = `#yz-filters-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 12px;
-  margin-right: 8px;
-  border: 1px solid var(--yt-spec-10-percent-layer, rgba(255,255,255,.1));
-  border-radius: 16px;
-  background: transparent;
+  justify-content: center;
+  width: 48px;
+  height: 40px;
+  padding: 0;
+  margin: 0;
+  border: 1px solid rgb(48,48,48);
+  border-left: 0;
+  border-radius: 0 20px 20px 0;
+  background: rgba(255,255,255,.08);
   color: var(--yt-spec-text-primary, inherit);
   font: inherit;
-  font-size: 13px;
-  opacity: .75;
   cursor: pointer;
   position: relative;
-  transition: opacity .15s, background .15s, border-color .15s;
+  flex: 0 0 auto;
+  transition: background .15s, color .15s;
 }
-#yz-filters-btn:hover { opacity: 1; }
+#yz-filters-btn:hover { background: var(--yt-spec-mono-tonal-hover, rgba(255,255,255,.14)); }
 #yz-filters-btn:focus-visible {
   outline: 2px solid var(--yt-spec-call-to-action, #3ea6ff);
   outline-offset: 2px;
 }
-#yz-filters-btn[data-has-active="true"] {
-  opacity: 1;
-  border-color: var(--yt-spec-call-to-action, #3ea6ff);
-  color: var(--yt-spec-call-to-action, #3ea6ff);
+ytd-masthead button.ytSearchboxComponentSearchButton.yz-search-btn-attached,
+ytd-masthead #search-icon-legacy.yz-search-btn-attached {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  margin-right: 0 !important;
 }
-.yz-btn__icon { font-size: 14px; line-height: 1; }
-.yz-btn__label { line-height: 1; }
+.yz-btn__icon {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.yz-btn__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
 .yz-btn__badge {
   position: absolute;
-  top: 4px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
+  top: 9px;
+  right: 11px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--yt-spec-call-to-action, #3ea6ff);
   font-size: 0;

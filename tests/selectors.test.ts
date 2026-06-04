@@ -103,6 +103,14 @@ describe('HIDE_RULES', () => {
       ).toBe(true);
     });
 
+    it('ловит полку Shorts на странице поиска', () => {
+      expect(
+        selectors.some(
+          (s) => s.startsWith('grid-shelf-view-model') && s.includes('ytm-shorts-lockup-view-model-v2')
+        )
+      ).toBe(true);
+    });
+
     it('сохраняет старые селекторы для совместимости', () => {
       expect(selectors).toContain('ytd-rich-shelf-renderer[is-shorts]');
       expect(selectors).toContain('ytd-reel-shelf-renderer');

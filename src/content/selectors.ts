@@ -21,6 +21,10 @@ export const HIDE_RULES: Partial<Record<ToggleKey, HideRule>> = {
       'ytd-rich-section-renderer:has(ytm-shorts-lockup-view-model-v2)',
       'ytd-rich-section-renderer:has(ytd-reel-shelf-renderer)',
       'ytd-rich-shelf-renderer:has(ytm-shorts-lockup-view-model-v2)',
+      // Поиск YouTube (подтверждено Chrome DevTools MCP 2026-06-05):
+      // search-полка Shorts рендерится как grid-shelf-view-model, без
+      // ytd-reel-shelf-renderer.
+      'grid-shelf-view-model:has(ytm-shorts-lockup-view-model-v2)',
       // Запись «Shorts» в сайдбаре (href отсутствует, идентифицируется по title)
       'ytd-guide-entry-renderer:has(a[title="Shorts"])',
     ],

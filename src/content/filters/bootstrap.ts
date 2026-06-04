@@ -3,6 +3,7 @@ import type { SearchFilters, ZenSettings } from '../../shared/types';
 import {
   BTN_ID,
   closePanel,
+  installPanelAutoClose,
   mountFiltersButton,
   openPanel,
   PANEL_ID,
@@ -11,6 +12,7 @@ import {
 } from './inline-ui';
 import { watchForCards } from './observer';
 import {
+  applySearchFiltersToUrl,
   applyOnLoad,
   installNavListener,
 } from './search-url-rewriter';
@@ -28,6 +30,7 @@ const SEARCH_KEYS = [
   'filterSearchSort',
   'filterSearchType',
 ] as const;
+const UPLOAD_DATE_FALLBACK_URL_KEY = 'yz-upload-date-fallback-url';
 
 export function scanAll(root: ParentNode, threshold: number): void {
   const cards = root.querySelectorAll(CARD_SELECTORS.join(','));
@@ -49,6 +52,7 @@ function currentFilters(): SearchFilters {
 
 function hasAnyActive(settings: ZenSettings): boolean {
   return (
+    settings.shorts ||
     settings.filterWatchedEnabled ||
     settings.filterSearchUploadDate !== 'any' ||
     settings.filterSearchDuration !== 'any' ||
@@ -91,6 +95,38 @@ export function getCurrentEnabled(): boolean {
   return current.filterWatchedEnabled;
 }
 
+export function applyUploadDateChangeToCurrentSearch(
+  filters: SearchFilters,
+  assign: (url: string) => void = (url) => window.location.assign(url)
+): void {
+  const url = new URL(window.location.href);
+  const next = applySearchFiltersToUrl(url, filters);
+  if (next.toString() === url.toString()) return;
+  assign(next.toString());
+}
+
+export function applyActiveUploadDateToCurrentSearch(
+  settings: ZenSettings,
+  assign: (url: string) => void = (url) => window.location.assign(url)
+): void {
+  if (settings.filterSearchUploadDate === 'any') return;
+  const filters: SearchFilters = {
+    uploadDate: settings.filterSearchUploadDate,
+    duration: settings.filterSearchDuration,
+    sort: settings.filterSearchSort,
+    type: settings.filterSearchType,
+  };
+  const url = new URL(window.location.href);
+  const next = applySearchFiltersToUrl(url, filters);
+  const nextUrl = next.toString();
+  if (nextUrl === url.toString()) return;
+  if (window.sessionStorage.getItem(UPLOAD_DATE_FALLBACK_URL_KEY) === nextUrl) {
+    return;
+  }
+  window.sessionStorage.setItem(UPLOAD_DATE_FALLBACK_URL_KEY, nextUrl);
+  assign(nextUrl);
+}
+
 function positionPanel(btn: HTMLElement, panel: HTMLElement): void {
   const rect = btn.getBoundingClientRect();
   panel.style.position = 'fixed';
@@ -115,6 +151,7 @@ function wirePanel(panel: HTMLElement): void {
 
 function wireButton(btn: HTMLButtonElement): void {
   syncButtonBadge(btn, hasAnyActive(current));
+  installPanelAutoClose(btn);
 
   btn.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -126,15 +163,6 @@ function wireButton(btn: HTMLButtonElement): void {
       wirePanel(panel);
       positionPanel(btn, panel);
     }
-  });
-
-  document.addEventListener('click', (e) => {
-    const open = btn.getAttribute('aria-expanded') === 'true';
-    if (!open) return;
-    const target = e.target as Node | null;
-    const panel = document.getElementById(PANEL_ID);
-    if (target && (btn.contains(target) || panel?.contains(target))) return;
-    closePanel(btn);
   });
 
   document.addEventListener('keydown', (e) => {
@@ -194,12 +222,14 @@ export function initWatchedFilter(): void {
   window.addEventListener('yt-navigate-finish', () => {
     syncHtmlClass();
     scanAll(document, current.filterWatchedThreshold);
+    applyActiveUploadDateToCurrentSearch(current);
   });
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== 'sync') return;
 
     const relevant: (keyof ZenSettings)[] = [
+      'shorts',
       'filterWatchedEnabled',
       'filterWatchedThreshold',
       ...SEARCH_KEYS,
@@ -214,6 +244,8 @@ export function initWatchedFilter(): void {
           changes[key]!.newValue;
       }
     }
+    const uploadDateChanged = 'filterSearchUploadDate' in changes;
     applySettings(next);
+    if (uploadDateChanged) applyUploadDateChangeToCurrentSearch(currentFilters());
   });
 }

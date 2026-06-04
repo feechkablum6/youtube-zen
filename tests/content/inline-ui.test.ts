@@ -6,6 +6,7 @@ import {
   closePanel,
   createFiltersButton,
   createPanel,
+  installPanelAutoClose,
   mountFiltersButton,
   openPanel,
   syncButtonBadge,
@@ -30,9 +31,10 @@ describe('createFiltersButton', () => {
     expect(badge!.hasAttribute('hidden')).toBe(true);
   });
 
-  it('contains visible label text', () => {
+  it('keeps label text for accessibility without relying on visible copy', () => {
     const btn = createFiltersButton();
     expect(btn.textContent).toContain('Фильтры');
+    expect(btn.title).toBe('Фильтры');
   });
 });
 
@@ -56,35 +58,47 @@ describe('syncButtonBadge', () => {
 });
 
 describe('mountFiltersButton', () => {
-  it('returns null when masthead does not exist yet', () => {
+  it('returns null when search button does not exist yet', () => {
     expect(mountFiltersButton()).toBeNull();
   });
 
-  it('inserts button before #buttons inside ytd-masthead #end', () => {
+  it('inserts button immediately after the native search button', () => {
     const masthead = document.createElement('ytd-masthead');
-    const end = document.createElement('div');
-    end.id = 'end';
-    const buttons = document.createElement('div');
-    buttons.id = 'buttons';
-    end.appendChild(buttons);
-    masthead.appendChild(end);
+    const searchBox = document.createElement('div');
+    const searchButton = document.createElement('button');
+    searchButton.id = 'search-icon-legacy';
+    searchBox.appendChild(searchButton);
+    masthead.appendChild(searchBox);
     document.body.appendChild(masthead);
 
     const btn = mountFiltersButton();
     expect(btn).not.toBeNull();
     expect(btn!.id).toBe(BTN_ID);
-    const children = Array.from(end.children);
-    const btnIdx = children.findIndex((c) => c.id === BTN_ID);
-    const buttonsIdx = children.findIndex((c) => c.id === 'buttons');
-    expect(btnIdx).toBeGreaterThan(-1);
-    expect(btnIdx).toBeLessThan(buttonsIdx);
+    expect(searchButton.nextElementSibling).toBe(btn);
+    expect(searchButton.classList.contains('yz-search-btn-attached')).toBe(true);
+  });
+
+  it('supports the current YouTube search button markup', () => {
+    const masthead = document.createElement('ytd-masthead');
+    const searchBox = document.createElement('div');
+    const searchButton = document.createElement('button');
+    searchButton.className = 'ytSearchboxComponentSearchButton';
+    searchButton.setAttribute('aria-label', 'Search');
+    searchBox.appendChild(searchButton);
+    masthead.appendChild(searchBox);
+    document.body.appendChild(masthead);
+
+    const btn = mountFiltersButton();
+    expect(btn).not.toBeNull();
+    expect(searchButton.nextElementSibling).toBe(btn);
+    expect(searchButton.classList.contains('yz-search-btn-attached')).toBe(true);
   });
 
   it('is idempotent (returns existing button on second call)', () => {
     const masthead = document.createElement('ytd-masthead');
-    const end = document.createElement('div');
-    end.id = 'end';
-    masthead.appendChild(end);
+    const searchButton = document.createElement('button');
+    searchButton.id = 'search-icon-legacy';
+    masthead.appendChild(searchButton);
     document.body.appendChild(masthead);
 
     const a = mountFiltersButton();
@@ -92,22 +106,10 @@ describe('mountFiltersButton', () => {
     expect(a).toBe(b);
     expect(document.querySelectorAll(`#${BTN_ID}`).length).toBe(1);
   });
-
-  it('appends to #end when #buttons is absent', () => {
-    const masthead = document.createElement('ytd-masthead');
-    const end = document.createElement('div');
-    end.id = 'end';
-    masthead.appendChild(end);
-    document.body.appendChild(masthead);
-
-    const btn = mountFiltersButton();
-    expect(btn).not.toBeNull();
-    expect(end.lastElementChild).toBe(btn);
-  });
 });
 
 describe('createPanel', () => {
-  it('renders dialog with watched toggle and 4 selects', () => {
+  it('renders dialog with feed toggles and 4 selects', () => {
     const panel = createPanel(DEFAULT_SETTINGS);
     expect(panel.id).toBe(PANEL_ID);
     expect(panel.getAttribute('role')).toBe('dialog');
@@ -115,6 +117,11 @@ describe('createPanel', () => {
     expect(
       panel.querySelector<HTMLInputElement>(
         'input[type="checkbox"][data-key="filterWatchedEnabled"]'
+      )
+    ).not.toBeNull();
+    expect(
+      panel.querySelector<HTMLInputElement>(
+        'input[type="checkbox"][data-key="shorts"]'
       )
     ).not.toBeNull();
     expect(
@@ -154,6 +161,14 @@ describe('createPanel', () => {
     )!;
     expect(toggle.checked).toBe(true);
   });
+
+  it('shorts toggle reflects shorts setting', () => {
+    const panel = createPanel({ ...DEFAULT_SETTINGS, shorts: false });
+    const toggle = panel.querySelector<HTMLInputElement>(
+      'input[data-key="shorts"]'
+    )!;
+    expect(toggle.checked).toBe(false);
+  });
 });
 
 describe('openPanel / closePanel', () => {
@@ -185,6 +200,47 @@ describe('openPanel / closePanel', () => {
   });
 });
 
+describe('installPanelAutoClose', () => {
+  it('closes panel on outside pointerdown even if the target stops propagation', () => {
+    const btn = createFiltersButton();
+    const video = document.createElement('video');
+    document.body.append(btn, video);
+    openPanel(btn, DEFAULT_SETTINGS);
+    installPanelAutoClose(btn);
+    video.addEventListener('pointerdown', (e) => e.stopPropagation());
+
+    video.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+
+    expect(document.getElementById(PANEL_ID)).toBeNull();
+    expect(btn.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('keeps panel open on pointerdown inside panel inputs', () => {
+    const btn = createFiltersButton();
+    document.body.appendChild(btn);
+    const panel = openPanel(btn, DEFAULT_SETTINGS);
+    installPanelAutoClose(btn);
+    const input = panel.querySelector('input')!;
+
+    input.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+
+    expect(document.getElementById(PANEL_ID)).toBe(panel);
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('keeps panel open on pointerdown on the filters button', () => {
+    const btn = createFiltersButton();
+    document.body.appendChild(btn);
+    const panel = openPanel(btn, DEFAULT_SETTINGS);
+    installPanelAutoClose(btn);
+
+    btn.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+
+    expect(document.getElementById(PANEL_ID)).toBe(panel);
+    expect(btn.getAttribute('aria-expanded')).toBe('true');
+  });
+});
+
 describe('syncPanelInputs', () => {
   it('updates select values from settings', () => {
     const btn = createFiltersButton();
@@ -209,10 +265,18 @@ describe('syncPanelInputs', () => {
     const btn = createFiltersButton();
     document.body.appendChild(btn);
     const panel = openPanel(btn, DEFAULT_SETTINGS);
-    syncPanelInputs(panel, { ...DEFAULT_SETTINGS, filterWatchedEnabled: true });
-    const toggle = panel.querySelector<HTMLInputElement>(
+    syncPanelInputs(panel, {
+      ...DEFAULT_SETTINGS,
+      filterWatchedEnabled: true,
+      shorts: false,
+    });
+    const watched = panel.querySelector<HTMLInputElement>(
       'input[data-key="filterWatchedEnabled"]'
     )!;
-    expect(toggle.checked).toBe(true);
+    const shorts = panel.querySelector<HTMLInputElement>(
+      'input[data-key="shorts"]'
+    )!;
+    expect(watched.checked).toBe(true);
+    expect(shorts.checked).toBe(false);
   });
 });

@@ -10,6 +10,11 @@ import type {
 export const BTN_ID = 'yz-filters-btn';
 export const PANEL_ID = 'yz-filters-panel';
 const LABEL = 'Фильтры';
+const SEARCH_BUTTON_SELECTOR = [
+  'ytd-masthead button.ytSearchboxComponentSearchButton',
+  'ytd-masthead #search-icon-legacy',
+].join(', ');
+const ATTACHED_SEARCH_CLASS = 'yz-search-btn-attached';
 
 export function createFiltersButton(): HTMLButtonElement {
   const btn = document.createElement('button');
@@ -19,11 +24,18 @@ export function createFiltersButton(): HTMLButtonElement {
   btn.setAttribute('aria-haspopup', 'dialog');
   btn.setAttribute('aria-expanded', 'false');
   btn.setAttribute('aria-label', LABEL);
+  btn.title = LABEL;
   btn.dataset.hasActive = 'false';
 
-  const icon = document.createElement('span');
-  icon.className = 'yz-btn__icon';
-  icon.textContent = '⚙';
+  const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  icon.classList.add('yz-btn__icon');
+  icon.setAttribute('viewBox', '0 0 24 24');
+  icon.setAttribute('aria-hidden', 'true');
+  icon.innerHTML =
+    '<path d="M4 7h8M16 7h4M4 12h4M12 12h8M4 17h10M18 17h2" />' +
+    '<circle cx="14" cy="7" r="2" />' +
+    '<circle cx="10" cy="12" r="2" />' +
+    '<circle cx="16" cy="17" r="2" />';
 
   const label = document.createElement('span');
   label.className = 'yz-btn__label';
@@ -52,13 +64,12 @@ export function mountFiltersButton(): HTMLButtonElement | null {
   const existing = document.getElementById(BTN_ID) as HTMLButtonElement | null;
   if (existing) return existing;
 
-  const end = document.querySelector('ytd-masthead #end');
-  if (!end) return null;
+  const searchButton = document.querySelector<HTMLElement>(SEARCH_BUTTON_SELECTOR);
+  if (!searchButton || !searchButton.parentElement) return null;
 
   const btn = createFiltersButton();
-  const buttons = end.querySelector('#buttons');
-  if (buttons) end.insertBefore(btn, buttons);
-  else end.appendChild(btn);
+  searchButton.classList.add(ATTACHED_SEARCH_CLASS);
+  searchButton.insertAdjacentElement('afterend', btn);
   return btn;
 }
 
@@ -129,19 +140,23 @@ function buildSelect(spec: SelectSpec, value: string): HTMLLabelElement {
   return row;
 }
 
-function buildToggleRow(checked: boolean): HTMLLabelElement {
+function buildToggleRow(
+  key: SettingsKey,
+  labelText: string,
+  checked: boolean
+): HTMLLabelElement {
   const row = document.createElement('label');
   row.className = 'yz-row yz-row--toggle';
 
   const label = document.createElement('span');
   label.className = 'yz-row__label';
-  label.textContent = 'Скрывать просмотренные';
+  label.textContent = labelText;
 
   const wrap = document.createElement('span');
   wrap.className = 'yz-toggle';
   const input = document.createElement('input');
   input.type = 'checkbox';
-  input.dataset.key = 'filterWatchedEnabled';
+  input.dataset.key = key;
   input.checked = checked;
   const slider = document.createElement('span');
   slider.className = 'yz-toggle-slider';
@@ -167,7 +182,16 @@ export function createPanel(settings: ZenSettings): HTMLElement {
   feedTitle.className = 'yz-group__title';
   feedTitle.textContent = 'Фильтры ленты';
   feedGroup.appendChild(feedTitle);
-  feedGroup.appendChild(buildToggleRow(settings.filterWatchedEnabled));
+  feedGroup.appendChild(
+    buildToggleRow(
+      'filterWatchedEnabled',
+      'Скрывать просмотренные',
+      settings.filterWatchedEnabled
+    )
+  );
+  feedGroup.appendChild(
+    buildToggleRow('shorts', 'Скрывать Shorts', settings.shorts)
+  );
   panel.appendChild(feedGroup);
 
   const searchGroup = document.createElement('section');
@@ -203,14 +227,39 @@ export function closePanel(btn: HTMLElement): void {
   btn.setAttribute('aria-expanded', 'false');
 }
 
+const autoCloseButtons = new WeakSet<HTMLElement>();
+
+export function installPanelAutoClose(btn: HTMLElement): void {
+  if (autoCloseButtons.has(btn)) return;
+  autoCloseButtons.add(btn);
+
+  document.addEventListener(
+    'pointerdown',
+    (e) => {
+      if (!btn.isConnected) return;
+      if (btn.getAttribute('aria-expanded') !== 'true') return;
+
+      const target = e.target as Node | null;
+      const panel = document.getElementById(PANEL_ID);
+      if (target && (btn.contains(target) || panel?.contains(target))) return;
+
+      closePanel(btn);
+    },
+    true
+  );
+}
+
 export function syncPanelInputs(
   panel: HTMLElement,
   settings: ZenSettings
 ): void {
-  const toggle = panel.querySelector<HTMLInputElement>(
-    'input[data-key="filterWatchedEnabled"]'
-  );
-  if (toggle) toggle.checked = settings.filterWatchedEnabled;
+  const toggleKeys: SettingsKey[] = ['filterWatchedEnabled', 'shorts'];
+  for (const key of toggleKeys) {
+    const toggle = panel.querySelector<HTMLInputElement>(
+      `input[data-key="${key}"]`
+    );
+    if (toggle) toggle.checked = Boolean(settings[key]);
+  }
 
   for (const spec of SELECT_SPECS) {
     const select = panel.querySelector<HTMLSelectElement>(

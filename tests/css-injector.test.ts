@@ -196,4 +196,13 @@ describe('buildCss — Filters button + panel styles', () => {
     const css = buildCss(ALL_OFF);
     expect(css).toContain('#yz-filters-btn');
   });
+
+  it('matches the native YouTube search button colors', () => {
+    const css = buildCss(ALL_OFF);
+    expect(css).toMatch(/border:\s*1px solid rgb\(48,48,48\)/);
+    expect(css).toMatch(/background:\s*rgba\(255,255,255,\.08\)/);
+    expect(css).not.toMatch(
+      /#yz-filters-btn\[data-has-active="true"\]\s*\{[^}]*color:\s*var\(--yt-spec-call-to-action/
+    );
+  });
 });
