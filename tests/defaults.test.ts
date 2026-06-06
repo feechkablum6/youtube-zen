@@ -18,6 +18,7 @@ const ALL_KEYS: (keyof ZenSettings)[] = [
   'footer',
   'fixUblock',
   'actionPanel',
+  'headerMenuButton',
   'activeSection',
   'filterWatchedEnabled',
   'filterWatchedThreshold',
@@ -42,6 +43,7 @@ const OFF_BY_DEFAULT: (keyof ZenSettings)[] = [
   'youMyChannel',
   'youHistory',
   'youWatchLater',
+  'headerMenuButton',
 ];
 
 describe('DEFAULT_SETTINGS', () => {

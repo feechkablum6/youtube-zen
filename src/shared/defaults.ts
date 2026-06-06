@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS: ZenSettings = {
   footer: true,
   fixUblock: true,
   actionPanel: true,
+  headerMenuButton: false,
   youList: true,
   youMyChannel: false,
   youHistory: false,

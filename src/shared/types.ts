@@ -32,6 +32,7 @@ export interface ZenSettings {
   footer: boolean;
   fixUblock: boolean;
   actionPanel: boolean;
+  headerMenuButton: boolean;
   youList: boolean;
   youMyChannel: boolean;
   youHistory: boolean;
@@ -65,7 +66,7 @@ export type ToggleKey = Exclude<
 
 export interface HideRule {
   label: string;
-  group: 'feed' | 'sidebar' | 'video' | 'footer';
+  group: 'feed' | 'sidebar' | 'video' | 'footer' | 'header';
   selectors: string[];
 }
 
@@ -83,6 +84,7 @@ export interface SidebarList {
 }
 
 export const GROUP_LABELS: Record<HideRule['group'], string> = {
+  header: 'Хедер',
   feed: 'Лента',
   sidebar: 'Сайдбар',
   video: 'Страница видео',

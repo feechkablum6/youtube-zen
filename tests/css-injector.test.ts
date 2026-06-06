@@ -19,6 +19,7 @@ const ALL_OFF: ZenSettings = {
   footer: false,
   fixUblock: false,
   actionPanel: false,
+  headerMenuButton: false,
 };
 
 describe('buildCss', () => {
@@ -167,6 +168,22 @@ describe('buildCss — watched filter', () => {
     // No animation on the watched rule — that was causing grid gaps.
     expect(css).not.toContain('yz-vanish-collapse');
     expect(css).not.toMatch(/\.yz-watched\s*\{[^}]*animation:/);
+  });
+});
+
+describe('buildCss — кнопка меню в хедере (гамбургер → логотип в угол)', () => {
+  it('скрывает гамбургер masthead (#guide-button) когда headerMenuButton включён', () => {
+    const settings: ZenSettings = { ...ALL_OFF, headerMenuButton: true };
+    const css = buildCss(settings);
+    // Скрытие гамбургера; логотип сам сдвигается на его место за счёт обнуления
+    // ширины/отступов в финальном кадре yz-vanish (DOM-инспекция 2026-06-06).
+    expect(css).toContain('ytd-masthead #guide-button');
+    expect(css).toMatch(/animation:\s*yz-vanish/);
+  });
+
+  it('не трогает гамбургер когда headerMenuButton выключен', () => {
+    const settings: ZenSettings = { ...ALL_OFF, headerMenuButton: false };
+    expect(buildCss(settings)).not.toContain('#guide-button');
   });
 });
 

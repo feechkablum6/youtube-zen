@@ -7,6 +7,7 @@ import { makeBreadcrumb } from './breadcrumb';
 const ALL_KEYS: ToggleKey[] = [
   // Плоские тумблеры (HIDE_RULES)
   'shorts', 'subscriptions', 'reportButton', 'footer', 'fixUblock', 'actionPanel',
+  'headerMenuButton',
   // Master + дети вложенных аккордеонов
   'youList', 'youMyChannel', 'youHistory', 'youWatchLater',
   'navigator', 'navMusic', 'navFilms', 'navLive',
@@ -15,7 +16,7 @@ const ALL_KEYS: ToggleKey[] = [
   'playlists', 'liked', 'yourVideos', 'downloads',
 ];
 
-const GROUP_ORDER: HideRule['group'][] = ['feed', 'sidebar', 'video', 'footer'];
+const GROUP_ORDER: HideRule['group'][] = ['header', 'feed', 'sidebar', 'video', 'footer'];
 
 // Preserved across re-renders (e.g. section switch) so user's collapsed /
 // expanded groups stay stable. Default: all collapsed.

@@ -13,6 +13,7 @@ describe('HIDE_RULES', () => {
     'footer',
     'fixUblock',
     'actionPanel',
+    'headerMenuButton',
   ];
 
   it('has a flat entry for every non-nested toggle', () => {
@@ -40,7 +41,7 @@ describe('HIDE_RULES', () => {
   });
 
   it('every flat rule has a valid group', () => {
-    const validGroups = ['feed', 'sidebar', 'video', 'footer'];
+    const validGroups = ['feed', 'sidebar', 'video', 'footer', 'header'];
     for (const [key, rule] of Object.entries(HIDE_RULES)) {
       const def = rule as HideRule;
       expect(validGroups, `${key} has invalid group "${def.group}"`).toContain(def.group);
@@ -201,6 +202,24 @@ describe('HIDE_RULES', () => {
     it('таргетирует in-feed рекламу ytd-in-feed-ad-layout-renderer', () => {
       const selectors = rule.selectors;
       expect(selectors.some(s => s.includes('ytd-in-feed-ad-layout-renderer'))).toBe(true);
+    });
+  });
+
+  describe('headerMenuButton — гамбургер (троеполосие) в хедере', () => {
+    const rule = HIDE_RULES.headerMenuButton as HideRule;
+
+    it('существует правило headerMenuButton', () => {
+      expect(HIDE_RULES).toHaveProperty('headerMenuButton');
+    });
+
+    it('таргетирует кнопку меню в masthead (#guide-button) — подтверждено DOM-инспекцией 2026-06-06', () => {
+      expect(
+        rule.selectors.some((s) => s.includes('ytd-masthead') && s.includes('#guide-button'))
+      ).toBe(true);
+    });
+
+    it('относится к группе header', () => {
+      expect(rule.group).toBe('header');
     });
   });
 

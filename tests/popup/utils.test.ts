@@ -34,7 +34,7 @@ describe('countActiveRules', () => {
   const ALL_CLEANER_KEYS: ToggleKey[] = [
     'shorts', 'playlists', 'liked', 'yourVideos', 'downloads',
     'subscriptions', 'navigator', 'explore', 'reportButton', 'footer',
-    'fixUblock', 'actionPanel',
+    'fixUblock', 'actionPanel', 'headerMenuButton',
     'youList', 'youMyChannel', 'youHistory', 'youWatchLater',
     'navMusic', 'navFilms', 'navLive',
     'exploreMusic', 'exploreKids',
@@ -42,21 +42,21 @@ describe('countActiveRules', () => {
 
   it('counts all rules active when all defaults are true', () => {
     const result = countActiveRules(DEFAULT_SETTINGS, ALL_CLEANER_KEYS);
-    // Из 21 ключа дефолт-false: filterWatchedEnabled (не в списке), youMyChannel, youHistory, youWatchLater.
-    expect(result).toEqual({ active: 18, total: 21 });
+    // Из 22 ключей дефолт-false: youMyChannel, youHistory, youWatchLater, headerMenuButton.
+    expect(result).toEqual({ active: 18, total: 22 });
   });
 
   it('counts zero when all toggles are off', () => {
     const off = { ...DEFAULT_SETTINGS };
     for (const k of ALL_CLEANER_KEYS) off[k] = false;
     const result = countActiveRules(off, ALL_CLEANER_KEYS);
-    expect(result).toEqual({ active: 0, total: 21 });
+    expect(result).toEqual({ active: 0, total: 22 });
   });
 
   it('counts a partial subset correctly', () => {
     const partial = { ...DEFAULT_SETTINGS, shorts: false, playlists: false };
     const result = countActiveRules(partial, ALL_CLEANER_KEYS);
-    expect(result).toEqual({ active: 16, total: 21 });
+    expect(result).toEqual({ active: 16, total: 22 });
   });
 
   it('handles empty key list', () => {
@@ -68,10 +68,17 @@ describe('groupRulesByGroup', () => {
   it('returns a Map keyed by group name', () => {
     const result = groupRulesByGroup(HIDE_RULES);
     expect(result).toBeInstanceOf(Map);
+    expect(result.has('header')).toBe(true);
     expect(result.has('feed')).toBe(true);
     expect(result.has('sidebar')).toBe(true);
     expect(result.has('video')).toBe(true);
     expect(result.has('footer')).toBe(true);
+  });
+
+  it('places headerMenuButton into header group', () => {
+    const result = groupRulesByGroup(HIDE_RULES);
+    const header = result.get('header')!;
+    expect(header.map((e) => e.key)).toEqual(['headerMenuButton']);
   });
 
   it('places shorts and fixUblock into feed group', () => {

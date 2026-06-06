@@ -6,6 +6,18 @@ import type { HideRule, SidebarList, ToggleKey } from '../shared/types';
 // аккордеоны. Тип остался ToggleKey, но Partial — потому что не каждого
 // ToggleKey обязательно есть запись в плоском реестре.
 export const HIDE_RULES: Partial<Record<ToggleKey, HideRule>> = {
+  headerMenuButton: {
+    label: 'Меню (☰)',
+    group: 'header',
+    selectors: [
+      // Гамбургер (троеполосие) в левом углу хедера. В #start он стоит первым
+      // (x=16, ширина 40), сразу за ним без отступа — логотип (#logo, x=56).
+      // Финальный кадр yz-vanish обнуляет ширину/отступы кнопки, поэтому логотип
+      // сам сдвигается на x=16 — ровно на место гамбургера. Подтверждено
+      // DOM-инспекцией залогиненного YouTube (2026-06-06).
+      'ytd-masthead #guide-button',
+    ],
+  },
   shorts: {
     label: 'Shorts',
     group: 'feed',
